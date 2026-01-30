@@ -368,333 +368,189 @@ export default function GreenwichSDARetreatApp() {
 
         {/* Location Tab - WITH GOOGLE MAPS */}
         {activeTab === 'location' && (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Location Tracking</h2>
-              <p className="text-blue-100">Real-time position and navigation</p>
+  <div className="space-y-6">
+    <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
+      <h2 className="text-2xl font-bold mb-2">Location Tracking</h2>
+      <p className="text-blue-100">Real-time position and navigation</p>
+    </div>
+
+    {/* Simple Map Visualization */}
+    <div className="bg-slate-800/70 backdrop-blur rounded-xl border border-slate-700 overflow-hidden">
+      <div className="h-96 bg-gradient-to-br from-slate-900 to-blue-900/50 flex items-center justify-center relative">
+        {/* Location Dots */}
+        <div className="absolute inset-0">
+          {/* Base Camp */}
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <div className="w-12 h-12 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
+              <span className="text-white text-lg">🏠</span>
             </div>
-
-            {/* Interactive Google Map */}
-            {googleMapsApiKey ? (
-              <LoadScript googleMapsApiKey={googleMapsApiKey}>
-                <GoogleMap
-                  mapContainerClassName="w-full h-96 rounded-xl border border-slate-700"
-                  center={{ 
-                    lat: 54.5262, 
-                    lng: -2.9620 
-                  }}
-                  zoom={12}
-                  options={{
-                    styles: [
-                      {
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#242f3e" }]
-                      },
-                      {
-                        "elementType": "labels.text.stroke",
-                        "stylers": [{ "color": "#242f3e" }]
-                      },
-                      {
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#746855" }]
-                      },
-                      {
-                        "featureType": "administrative.locality",
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#d59563" }]
-                      },
-                      {
-                        "featureType": "poi",
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#d59563" }]
-                      },
-                      {
-                        "featureType": "poi.park",
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#263c3f" }]
-                      },
-                      {
-                        "featureType": "poi.park",
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#6b9a76" }]
-                      },
-                      {
-                        "featureType": "road",
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#38414e" }]
-                      },
-                      {
-                        "featureType": "road",
-                        "elementType": "geometry.stroke",
-                        "stylers": [{ "color": "#212a37" }]
-                      },
-                      {
-                        "featureType": "road",
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#9ca5b3" }]
-                      },
-                      {
-                        "featureType": "road.highway",
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#746855" }]
-                      },
-                      {
-                        "featureType": "road.highway",
-                        "elementType": "geometry.stroke",
-                        "stylers": [{ "color": "#1f2835" }]
-                      },
-                      {
-                        "featureType": "road.highway",
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#f3d19c" }]
-                      },
-                      {
-                        "featureType": "transit",
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#2f3948" }]
-                      },
-                      {
-                        "featureType": "transit.station",
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#d59563" }]
-                      },
-                      {
-                        "featureType": "water",
-                        "elementType": "geometry",
-                        "stylers": [{ "color": "#17263c" }]
-                      },
-                      {
-                        "featureType": "water",
-                        "elementType": "labels.text.fill",
-                        "stylers": [{ "color": "#515c6d" }]
-                      },
-                      {
-                        "featureType": "water",
-                        "elementType": "labels.text.stroke",
-                        "stylers": [{ "color": "#17263c" }]
-                      }
-                    ],
-                    disableDefaultUI: false,
-                    zoomControl: true,
-                    streetViewControl: false,
-                    mapTypeControl: false,
-                    fullscreenControl: true
-                  }}
-                >
-                  {/* Base Camp Marker */}
-                  <Marker
-                    position={{ lat: 54.5262, lng: -2.9620 }}
-                    icon={{
-                      url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z'/%3E%3C/svg%3E",
-                      scaledSize: new window.google.maps.Size(40, 40)
-                    }}
-                    title="Bury Jubilee Outdoor Pursuits Centre"
-                  >
-                    <InfoWindow>
-                      <div className="text-slate-900 p-2">
-                        <h3 className="font-bold">🏠 Base Camp</h3>
-                        <p>Bury Jubilee Centre</p>
-                        <p>Glenridding, Cumbria CA11 0QR</p>
-                      </div>
-                    </InfoWindow>
-                  </Marker>
-
-                  {/* Helvellyn Summit Marker */}
-                  <Marker
-                    position={{ lat: 54.5275, lng: -3.0164 }}
-                    icon={{
-                      url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b'%3E%3Cpath d='M12 2L2 22h20L12 2zm0 4.5l5.5 9.5h-11L12 6.5z'/%3E%3C/svg%3E",
-                      scaledSize: new window.google.maps.Size(35, 35)
-                    }}
-                    title="Helvellyn Summit"
-                  >
-                    <InfoWindow>
-                      <div className="text-slate-900 p-2">
-                        <h3 className="font-bold">⛰️ Helvellyn Summit</h3>
-                        <p>England's 3rd highest peak (950m)</p>
-                        <p>Sunday hike destination</p>
-                      </div>
-                    </InfoWindow>
-                  </Marker>
-
-                  {/* Aira Force Marker */}
-                  <Marker
-                    position={{ lat: 54.5733, lng: -2.9067 }}
-                    icon={{
-                      url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230ea5e9'%3E%3Cpath d='M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zM7 9l1.41 1.41L11 7.83V16h2V7.83l2.59 2.58L17 9l-5-5-5 5z'/%3E%3C/svg%3E",
-                      scaledSize: new window.google.maps.Size(35, 35)
-                    }}
-                    title="Aira Force Waterfall"
-                  >
-                    <InfoWindow>
-                      <div className="text-slate-900 p-2">
-                        <h3 className="font-bold">💧 Aira Force Waterfall</h3>
-                        <p>65-foot cascade through ancient woodland</p>
-                        <p>Saturday hike destination</p>
-                      </div>
-                    </InfoWindow>
-                  </Marker>
-
-                  {/* Ullswater Marker */}
-                  <Marker
-                    position={{ lat: 54.5500, lng: -2.9300 }}
-                    icon={{
-                      url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230ea5e9'%3E%3Cpath d='M22 15c0-1.66-1.34-3-3-3s-3 1.34-3 3c0 .75.29 1.43.76 1.95l-3.39 3.4C13.12 20.48 12.34 21 11.5 21c-1.2 0-2.18-.96-2.18-2.14 0-.53.2-1.02.53-1.4l3.47-3.47C13.46 13.78 13.25 13 13 13c-1.66 0-3 1.34-3 3 0 .75.29 1.43.76 1.95l-4.76 4.77 1.42 1.42L11 17.42l4.24 4.24 1.42-1.42-4.24-4.24.71-.71 4.24 4.24 1.42-1.42-4.24-4.24.71-.71 4.24 4.24 1.42-1.42-4.24-4.24c.47-.52.76-1.2.76-1.95z'/%3E%3C/svg%3E",
-                      scaledSize: new window.google.maps.Size(35, 35)
-                    }}
-                    title="Ullswater Lake"
-                  >
-                    <InfoWindow>
-                      <div className="text-slate-900 p-2">
-                        <h3 className="font-bold">🛥️ Ullswater Lake</h3>
-                        <p>England's most beautiful lake</p>
-                        <p>Optional steamer cruises</p>
-                      </div>
-                    </InfoWindow>
-                  </Marker>
-
-                  {/* Glenridding Dodd Marker */}
-                  <Marker
-                    position={{ lat: 54.5350, lng: -2.9500 }}
-                    icon={{
-                      url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238b5cf6'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z'/%3E%3C/svg%3E",
-                      scaledSize: new window.google.maps.Size(35, 35)
-                    }}
-                    title="Glenridding Dodd"
-                  >
-                    <InfoWindow>
-                      <div className="text-slate-900 p-2">
-                        <h3 className="font-bold">🥾 Glenridding Dodd</h3>
-                        <p>Gentle fell with panoramic views</p>
-                        <p>Friday orientation walk</p>
-                      </div>
-                    </InfoWindow>
-                  </Marker>
-
-                  {/* Current User Location (if available) */}
-                  {currentLocation && (
-                    <Marker
-                      position={{ lat: currentLocation.lat, lng: currentLocation.lng }}
-                      icon={{
-                        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ef4444'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z'/%3E%3C/svg%3E",
-                        scaledSize: new window.google.maps.Size(30, 30)
-                      }}
-                      title="Your Location"
-                    >
-                      <InfoWindow>
-                        <div className="text-slate-900 p-2">
-                          <h3 className="font-bold">📍 Your Location</h3>
-                          <p>Lat: {currentLocation.lat.toFixed(4)}°</p>
-                          <p>Lng: {currentLocation.lng.toFixed(4)}°</p>
-                        </div>
-                      </InfoWindow>
-                    </Marker>
-                  )}
-                </GoogleMap>
-              </LoadScript>
-            ) : (
-              <div className="bg-slate-800/70 backdrop-blur rounded-xl p-8 border border-slate-700 text-center">
-                <Navigation className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-                <p className="text-slate-400 mb-2">Google Maps requires an API key</p>
-                <p className="text-sm text-slate-500 mb-4">
-                  Get a free API key from <a href="https://console.cloud.google.com/" className="text-emerald-400 hover:text-emerald-300" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>
-                </p>
-                <p className="text-sm text-slate-500">
-                  Then set it as: <code className="bg-slate-700 px-2 py-1 rounded text-xs">VITE_GOOGLE_MAPS_API_KEY=your_key_here</code>
-                </p>
-              </div>
-            )}
-
-            {/* Current Location Info */}
-            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-emerald-400" />
-                Your Current Position
-              </h3>
-              {currentLocation ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-700/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Latitude</p>
-                      <p className="text-slate-300 font-mono">{currentLocation.lat.toFixed(6)}°</p>
-                    </div>
-                    <div className="bg-slate-700/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-400 mb-1">Longitude</p>
-                      <p className="text-slate-300 font-mono">{currentLocation.lng.toFixed(6)}°</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-emerald-400">
-                    Distance to base: ~{calculateDistance(
-                      currentLocation.lat,
-                      currentLocation.lng,
-                      baseLocation.lat,
-                      baseLocation.lng
-                    )} km
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-slate-400 mb-2">Enable location services to track your position</p>
-                  <button 
-                    onClick={() => {
-                      if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                          (position) => {
-                            setCurrentLocation({
-                              lat: position.coords.latitude,
-                              lng: position.coords.longitude
-                            });
-                          },
-                          (error) => alert('Please enable location access in your browser settings')
-                        );
-                      }
-                    }}
-                    className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
-                  >
-                    Enable Location Tracking
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Key Locations with Distances */}
-            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-              <h3 className="text-lg font-semibold mb-4">Distance to Key Locations</h3>
-              <div className="space-y-3">
-                {Object.entries(locations).map(([key, loc]) => (
-                  <div key={key} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${
-                        key === 'base' ? 'bg-emerald-500' :
-                        key === 'helvellyn' ? 'bg-amber-500' :
-                        key === 'airaForce' ? 'bg-blue-500' :
-                        key === 'ullswater' ? 'bg-indigo-500' :
-                        'bg-purple-500'
-                      }`} />
-                      <div>
-                        <p className="font-medium">{loc.name}</p>
-                        <p className="text-xs text-slate-400">
-                          {loc.lat.toFixed(4)}°, {loc.lng.toFixed(4)}°
-                        </p>
-                      </div>
-                    </div>
-                    {currentLocation ? (
-                      <div className="text-right">
-                        <span className="text-emerald-400 text-sm font-medium">
-                          {calculateDistance(currentLocation.lat, currentLocation.lng, loc.lat, loc.lng)} km
-                        </span>
-                        <p className="text-xs text-slate-500">straight line</p>
-                      </div>
-                    ) : (
-                      <span className="text-slate-500 text-sm">-- km</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+            <div className="mt-2 text-center">
+              <p className="text-white font-bold text-sm">Base Camp</p>
+              <p className="text-emerald-300 text-xs">Bury Jubilee Centre</p>
             </div>
           </div>
-        )}
+          
+          {/* Helvellyn */}
+          <div className="absolute left-1/4 top-1/4">
+            <div className="w-10 h-10 bg-amber-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
+              <span className="text-white">⛰️</span>
+            </div>
+          </div>
+          
+          {/* Aira Force */}
+          <div className="absolute left-3/4 top-1/3">
+            <div className="w-10 h-10 bg-blue-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
+              <span className="text-white">💧</span>
+            </div>
+          </div>
+          
+          {/* Ullswater */}
+          <div className="absolute left-2/3 top-2/3">
+            <div className="w-10 h-10 bg-indigo-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
+              <span className="text-white">🛥️</span>
+            </div>
+          </div>
+          
+          {/* Current Location if available */}
+          {currentLocation && (
+            <div className="absolute" style={{ 
+              left: `${50 + (currentLocation.lng - (-2.9620)) * 100}%`,
+              top: `${50 - (currentLocation.lat - 54.5262) * 100}%`
+            }}>
+              <div className="w-8 h-8 bg-red-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center animate-bounce">
+                <span className="text-white text-xs">📍</span>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Connection Lines */}
+        <svg className="absolute inset-0 w-full h-full">
+          <line x1="50%" y1="50%" x2="25%" y2="25%" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,5" />
+          <line x1="50%" y1="50%" x2="75%" y2="33%" stroke="#0ea5e9" strokeWidth="2" strokeDasharray="5,5" />
+          <line x1="50%" y1="50%" x2="67%" y2="67%" stroke="#8b5cf6" strokeWidth="2" strokeDasharray="5,5" />
+        </svg>
+        
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur rounded-lg p-3 border border-slate-700">
+          <p className="text-sm font-semibold mb-2">Legend</p>
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+              <span>Base Camp</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+              <span>Helvellyn</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <span>Aira Force</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+              <span>Ullswater</span>
+            </div>
+            {currentLocation && (
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span>Your Location</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
 
+    {/* Current Location Info */}
+    <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <MapPin className="w-5 h-5 text-emerald-400" />
+        Your Current Position
+      </h3>
+      {currentLocation ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Latitude</p>
+              <p className="text-slate-300 font-mono">{currentLocation.lat.toFixed(6)}°</p>
+            </div>
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Longitude</p>
+              <p className="text-slate-300 font-mono">{currentLocation.lng.toFixed(6)}°</p>
+            </div>
+          </div>
+          <p className="text-sm text-emerald-400">
+            Distance to base: ~{calculateDistance(
+              currentLocation.lat,
+              currentLocation.lng,
+              baseLocation.lat,
+              baseLocation.lng
+            )} km
+          </p>
+        </div>
+      ) : (
+        <div className="text-center py-4">
+          <p className="text-slate-400 mb-2">Enable location services to track your position</p>
+          <button 
+            onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    setCurrentLocation({
+                      lat: position.coords.latitude,
+                      lng: position.coords.longitude
+                    });
+                  },
+                  (error) => alert('Please enable location access in your browser settings')
+                );
+              }
+            }}
+            className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
+          >
+            Enable Location Tracking
+          </button>
+        </div>
+      )}
+    </div>
+
+    {/* Key Locations with Distances */}
+    <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+      <h3 className="text-lg font-semibold mb-4">Distance to Key Locations</h3>
+      <div className="space-y-3">
+        {Object.entries(locations).map(([key, loc]) => (
+          <div key={key} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${
+                key === 'base' ? 'bg-emerald-500' :
+                key === 'helvellyn' ? 'bg-amber-500' :
+                key === 'airaForce' ? 'bg-blue-500' :
+                key === 'ullswater' ? 'bg-indigo-500' :
+                'bg-purple-500'
+              }`} />
+              <div>
+                <p className="font-medium">{loc.name}</p>
+                <p className="text-xs text-slate-400">
+                  {loc.lat.toFixed(4)}°, {loc.lng.toFixed(4)}°
+                </p>
+              </div>
+            </div>
+            {currentLocation ? (
+              <div className="text-right">
+                <span className="text-emerald-400 text-sm font-medium">
+                  {calculateDistance(currentLocation.lat, currentLocation.lng, loc.lat, loc.lng)} km
+                </span>
+                <p className="text-xs text-slate-500">straight line</p>
+              </div>
+            ) : (
+              <span className="text-slate-500 text-sm">-- km</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
         {/* Devotional Tab */}
         {activeTab === 'devotional' && (
           <div className="space-y-6">
