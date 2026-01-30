@@ -2,6 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, Upload, Navigation, Clock, Sun, Cloud } from 'lucide-react';
 
+// Leaflet Map imports
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
 export default function GreenwichSDARetreatApp() {
   const [activeTab, setActiveTab] = useState('schedule');
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -10,6 +15,16 @@ export default function GreenwichSDARetreatApp() {
   const [prayerRequests, setPrayerRequests] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [comments, setComments] = useState({});
+
+  // Fix for default icons in Leaflet
+  useEffect(() => {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
+  }, []);
 
   // Base location - Bury Jubilee Outdoor Pursuits Centre
   const baseLocation = {
@@ -214,6 +229,28 @@ export default function GreenwichSDARetreatApp() {
     }]);
   };
 
+  // Custom icon creator for Leaflet markers
+  const createCustomIcon = (color, emoji = '📍') => {
+    return new L.Icon({
+      html: `<div style="
+        background-color: ${color};
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 16px;
+      ">${emoji}</div>`,
+      iconSize: [35, 35],
+      iconAnchor: [17, 35],
+      popupAnchor: [0, -35],
+    });
+  };
+
   const currentSchedule = getDaySchedule();
   const currentHour = currentTime.getHours() + (currentTime.getMinutes() / 60);
 
@@ -363,7 +400,7 @@ export default function GreenwichSDARetreatApp() {
           </div>
         )}
 
-        {/* Location Tab */}
+        {/* Location Tab - NOW WITH INTERACTIVE MAP */}
         {activeTab === 'location' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
@@ -371,34 +408,115 @@ export default function GreenwichSDARetreatApp() {
               <p className="text-blue-100">Real-time position and navigation</p>
             </div>
 
-            {/* Map Placeholder */}
+            {/* Interactive OpenStreetMap */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl border border-slate-700 overflow-hidden">
-              <div className="h-96 bg-gradient-to-br from-teal-900/30 to-blue-900/30 flex items-center justify-center relative">
-                <div className="absolute inset-0 opacity-10">
-                  {[...Array(20)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute bg-emerald-400 rounded-full"
-                      style={{
-                        width: Math.random() * 4 + 2 + 'px',
-                        height: Math.random() * 4 + 2 + 'px',
-                        left: Math.random() * 100 + '%',
-                        top: Math.random() * 100 + '%'
-                      }}
-                    />
-                  ))}
-                </div>
-                <div className="text-center z-10">
-                  <Navigation className="w-16 h-16 mx-auto mb-4 text-emerald-400 animate-pulse" />
-                  <p className="text-lg font-semibold mb-2">Interactive Map</p>
-                  <p className="text-slate-400 max-w-md">
-                    Map functionality would integrate with a mapping service like Google Maps or Mapbox to show your current location relative to retreat activities
-                  </p>
-                </div>
-              </div>
+              <MapContainer
+                center={[54.5262, -2.9620]}
+                zoom={12}
+                style={{ height: '400px', width: '100%' }}
+                scrollWheelZoom={true}
+                className="rounded-lg"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                
+                {/* Base Camp Marker */}
+                <Marker 
+                  position={[54.5262, -2.9620]} 
+                  icon={createCustomIcon('#10b981', '🏠')}
+                >
+                  <Popup>
+                    <div className="text-slate-900 p-2">
+                      <h3 className="font-bold text-lg">🏠 Base Camp</h3>
+                      <p className="text-sm">Bury Jubilee Outdoor Pursuits Centre</p>
+                      <p className="text-xs text-slate-600">Glenridding, Cumbria CA11 0QR</p>
+                      <p className="text-xs text-emerald-600 font-medium mt-1">Main accommodation & meals</p>
+                    </div>
+                  </Popup>
+                </Marker>
+
+                {/* Helvellyn Summit Marker */}
+                <Marker 
+                  position={[54.5275, -3.0164]} 
+                  icon={createCustomIcon('#f59e0b', '⛰️')}
+                >
+                  <Popup>
+                    <div className="text-slate-900 p-2">
+                      <h3 className="font-bold text-lg">⛰️ Helvellyn Summit</h3>
+                      <p className="text-sm">England's 3rd highest peak (950m)</p>
+                      <p className="text-xs text-slate-600">Famous Striding Edge scramble route</p>
+                      <p className="text-xs text-amber-600 font-medium mt-1">Sunday hike destination</p>
+                    </div>
+                  </Popup>
+                </Marker>
+
+                {/* Aira Force Marker */}
+                <Marker 
+                  position={[54.5733, -2.9067]} 
+                  icon={createCustomIcon('#0ea5e9', '💧')}
+                >
+                  <Popup>
+                    <div className="text-slate-900 p-2">
+                      <h3 className="font-bold text-lg">💧 Aira Force Waterfall</h3>
+                      <p className="text-sm">65-foot cascade through ancient woodland</p>
+                      <p className="text-xs text-slate-600">National Trust site</p>
+                      <p className="text-xs text-blue-600 font-medium mt-1">Saturday hike destination</p>
+                    </div>
+                  </Popup>
+                </Marker>
+
+                {/* Ullswater Marker */}
+                <Marker 
+                  position={[54.5500, -2.9300]} 
+                  icon={createCustomIcon('#3b82f6', '🛥️')}
+                >
+                  <Popup>
+                    <div className="text-slate-900 p-2">
+                      <h3 className="font-bold text-lg">🛥️ Ullswater Lake</h3>
+                      <p className="text-sm">England's most beautiful lake</p>
+                      <p className="text-xs text-slate-600">Steamer cruises available</p>
+                      <p className="text-xs text-indigo-600 font-medium mt-1">Optional Saturday activity</p>
+                    </div>
+                  </Popup>
+                </Marker>
+
+                {/* Glenridding Dodd Marker */}
+                <Marker 
+                  position={[54.5350, -2.9500]} 
+                  icon={createCustomIcon('#8b5cf6', '🥾')}
+                >
+                  <Popup>
+                    <div className="text-slate-900 p-2">
+                      <h3 className="font-bold text-lg">🥾 Glenridding Dodd</h3>
+                      <p className="text-sm">Gentle fell with panoramic views</p>
+                      <p className="text-xs text-slate-600">Perfect acclimatisation hike</p>
+                      <p className="text-xs text-purple-600 font-medium mt-1">Friday orientation walk</p>
+                    </div>
+                  </Popup>
+                </Marker>
+
+                {/* Current User Location */}
+                {currentLocation && (
+                  <Marker 
+                    position={[currentLocation.lat, currentLocation.lng]} 
+                    icon={createCustomIcon('#ef4444', '📍')}
+                  >
+                    <Popup>
+                      <div className="text-slate-900 p-2">
+                        <h3 className="font-bold text-lg">📍 Your Location</h3>
+                        <p className="text-sm">Lat: {currentLocation.lat.toFixed(4)}°</p>
+                        <p className="text-sm">Lng: {currentLocation.lng.toFixed(4)}°</p>
+                        <p className="text-xs text-red-600 font-medium mt-1">Live GPS position</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )}
+              </MapContainer>
             </div>
 
-            {/* Current Location */}
+            {/* Current Location Info */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-emerald-400" />
@@ -406,9 +524,16 @@ export default function GreenwichSDARetreatApp() {
               </h3>
               {currentLocation ? (
                 <div className="space-y-3">
-                  <p className="text-slate-300">
-                    Latitude: {currentLocation.lat.toFixed(4)}°, Longitude: {currentLocation.lng.toFixed(4)}°
-                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-700/50 rounded-lg p-3">
+                      <p className="text-xs text-slate-400 mb-1">Latitude</p>
+                      <p className="text-slate-300 font-mono">{currentLocation.lat.toFixed(6)}°</p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-3">
+                      <p className="text-xs text-slate-400 mb-1">Longitude</p>
+                      <p className="text-slate-300 font-mono">{currentLocation.lng.toFixed(6)}°</p>
+                    </div>
+                  </div>
                   <p className="text-sm text-emerald-400">
                     Distance to base: ~{calculateDistance(
                       currentLocation.lat,
@@ -419,26 +544,60 @@ export default function GreenwichSDARetreatApp() {
                   </p>
                 </div>
               ) : (
-                <p className="text-slate-400">Enable location services to track your position</p>
+                <div className="text-center py-4">
+                  <p className="text-slate-400 mb-2">Enable location services to track your position</p>
+                  <button 
+                    onClick={() => {
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (position) => {
+                            setCurrentLocation({
+                              lat: position.coords.latitude,
+                              lng: position.coords.longitude
+                            });
+                          },
+                          (error) => alert('Please enable location access in your browser settings')
+                        );
+                      }
+                    }}
+                    className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
+                  >
+                    Enable Location Tracking
+                  </button>
+                </div>
               )}
             </div>
 
-            {/* Key Locations */}
+            {/* Key Locations with Distances */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-              <h3 className="text-lg font-semibold mb-4">Key Locations</h3>
+              <h3 className="text-lg font-semibold mb-4">Distance to Key Locations</h3>
               <div className="space-y-3">
                 {Object.entries(locations).map(([key, loc]) => (
-                  <div key={key} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{loc.name}</p>
-                      <p className="text-xs text-slate-400">
-                        {loc.lat.toFixed(4)}°, {loc.lng.toFixed(4)}°
-                      </p>
+                  <div key={key} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${
+                        key === 'base' ? 'bg-emerald-500' :
+                        key === 'helvellyn' ? 'bg-amber-500' :
+                        key === 'airaForce' ? 'bg-blue-500' :
+                        key === 'ullswater' ? 'bg-indigo-500' :
+                        'bg-purple-500'
+                      }`} />
+                      <div>
+                        <p className="font-medium">{loc.name}</p>
+                        <p className="text-xs text-slate-400">
+                          {loc.lat.toFixed(4)}°, {loc.lng.toFixed(4)}°
+                        </p>
+                      </div>
                     </div>
-                    {currentLocation && (
-                      <span className="text-emerald-400 text-sm">
-                        {calculateDistance(currentLocation.lat, currentLocation.lng, loc.lat, loc.lng)} km
-                      </span>
+                    {currentLocation ? (
+                      <div className="text-right">
+                        <span className="text-emerald-400 text-sm font-medium">
+                          {calculateDistance(currentLocation.lat, currentLocation.lng, loc.lat, loc.lng)} km
+                        </span>
+                        <p className="text-xs text-slate-500">straight line</p>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 text-sm">-- km</span>
                     )}
                   </div>
                 ))}
