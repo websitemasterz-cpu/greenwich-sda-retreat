@@ -369,11 +369,59 @@ export default function GreenwichSDARetreatApp() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white">
       {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 shadow-lg relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill="%23000000" fill-opacity="0.05" /%3E%3C/svg%3E')] opacity-10"></div>
-        
-        <div className="relative px-4 py-4">
-          <div className="flex items-center justify-between">
+<div className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-700 shadow-lg relative overflow-hidden">
+  {/* Remove or fix the problematic background pattern */}
+  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5 opacity-30"></div>
+  
+  <div className="relative px-4 py-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Greenwich SDA</h1>
+        <p className="text-emerald-100 text-sm mt-1">Men's Ministry • Lake District Retreat 2026</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+          {getWeatherIcon(weather.condition)}
+          <div className="flex items-baseline">
+            <span className="text-xl font-bold">{weather.temperature}°</span>
+            <span className="text-xs ml-1">C</span>
+          </div>
+        </div>
+        <button
+          onClick={() => setShowUserModal(true)}
+          className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center shadow-md"
+        >
+          <span className="text-lg">{currentUser.avatar}</span>
+        </button>
+      </div>
+    </div>
+    
+    <div className="mt-4 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-emerald-200" />
+          <span className="text-sm">Bury Jubilee Centre</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-emerald-200" />
+          <span className="text-sm">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+      </div>
+      
+      <button
+        onClick={() => setShowNotifications(!showNotifications)}
+        className="relative"
+      >
+        <Bell className="w-5 h-5" />
+        {unreadNotifications > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            {unreadNotifications}
+          </span>
+        )}
+      </button>
+    </div>
+  </div>
+</div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Greenwich SDA</h1>
               <p className="text-emerald-100 text-sm mt-1">Men's Ministry • Lake District Retreat 2026</p>
