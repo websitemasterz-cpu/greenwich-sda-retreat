@@ -1,40 +1,85 @@
 // src/App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, Upload, Navigation, Clock, Sun, Cloud, CloudRain, Thermometer, Droplets, Wind, CloudSnow, CloudLightning } from 'lucide-react';
+import { Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, Upload, Navigation, Clock, Sun, Cloud, CloudRain, Thermometer, Droplets, Wind, CloudSnow, CloudLightning, ThumbsUp, Share2, Bell, Send, MoreVertical, Edit, Trash2, Check, X, RefreshCw } from 'lucide-react';
 
 export default function GreenwichSDARetreatApp() {
-  // State management with localStorage
+  // State management with enhanced user system
   const [activeTab, setActiveTab] = useState('schedule');
   const [currentLocation, setCurrentLocation] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [prayerText, setPrayerText] = useState('');
   const [testimonialText, setTestimonialText] = useState('');
   const [photoCaption, setPhotoCaption] = useState({});
   const [photoComment, setPhotoComment] = useState({});
+  const [commentText, setCommentText] = useState({});
+  const [replyText, setReplyText] = useState({});
+  const [editingItem, setEditingItem] = useState(null);
+  const [editText, setEditText] = useState('');
 
-  // Load data from localStorage on initial render
+  // Mock users database
+  const mockUsers = [
+    { id: 1, name: 'David M.', avatar: '👨‍🦰', color: 'text-blue-400', bg: 'bg-blue-500' },
+    { id: 2, name: 'Samuel P.', avatar: '👨‍🦱', color: 'text-emerald-400', bg: 'bg-emerald-500' },
+    { id: 3, name: 'Michael B.', avatar: '👨‍🦳', color: 'text-amber-400', bg: 'bg-amber-500' },
+    { id: 4, name: 'John W.', avatar: '👨‍💼', color: 'text-purple-400', bg: 'bg-purple-500' },
+    { id: 5, name: 'Thomas R.', avatar: '👨‍🔧', color: 'text-rose-400', bg: 'bg-rose-500' },
+    { id: 6, name: 'James K.', avatar: '👨‍🏫', color: 'text-cyan-400', bg: 'bg-cyan-500' },
+  ];
+
+  // Current user state with localStorage
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('retreatCurrentUser');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    // Default to first user or create new
+    return {
+      id: Date.now(),
+      name: 'You',
+      avatar: '👤',
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-500',
+      isOnline: true,
+      lastSeen: new Date().toISOString()
+    };
+  });
+
+  // All users (current user + mock users)
+  const [allUsers, setAllUsers] = useState([...mockUsers, currentUser]);
+
+  // Load community data from localStorage
   const [photos, setPhotos] = useState(() => {
-    const saved = localStorage.getItem('retreatPhotos');
+    const saved = localStorage.getItem('retreatCommunityPhotos');
     return saved ? JSON.parse(saved) : [];
   });
   
   const [prayerRequests, setPrayerRequests] = useState(() => {
-    const saved = localStorage.getItem('retreatPrayerRequests');
+    const saved = localStorage.getItem('retreatCommunityPrayers');
     return saved ? JSON.parse(saved) : [];
   });
   
   const [testimonials, setTestimonials] = useState(() => {
-    const saved = localStorage.getItem('retreatTestimonials');
+    const saved = localStorage.getItem('retreatCommunityTestimonials');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [userName, setUserName] = useState(() => {
-    return localStorage.getItem('retreatUserName') || '';
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('retreatNotifications');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 1,
+        type: 'welcome',
+        message: 'Welcome to the retreat community! Start by sharing a prayer request.',
+        timestamp: new Date().toISOString(),
+        read: false
+      }
+    ];
   });
 
   const [weather, setWeather] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Mock weather data
   const mockWeatherData = {
@@ -53,7 +98,7 @@ export default function GreenwichSDARetreatApp() {
     ]
   };
 
-  // Base location - Bury Jubilee Outdoor Pursuits Centre
+  // Base location
   const baseLocation = {
     lat: 54.5262,
     lng: -2.9620,
@@ -69,7 +114,7 @@ export default function GreenwichSDARetreatApp() {
     ullswater: { lat: 54.5500, lng: -2.9300, name: 'Ullswater Lake' }
   };
 
-  // Daily schedule
+  // Daily schedule (same as before)
   const schedule = {
     friday: [
       { time: '06:00', activity: 'Depart London', location: 'London', emoji: '🚌' },
@@ -107,7 +152,7 @@ export default function GreenwichSDARetreatApp() {
     ]
   };
 
-  // Daily devotionals
+  // Daily devotionals (same as before)
   const devotionals = {
     friday: {
       title: 'Taking Charge: You Will Part the Waters',
@@ -135,7 +180,7 @@ export default function GreenwichSDARetreatApp() {
     }
   };
 
-  // Local attractions
+  // Local attractions (same as before)
   const attractions = [
     {
       name: 'Aira Force Waterfall',
@@ -183,23 +228,26 @@ export default function GreenwichSDARetreatApp() {
 
   // Save to localStorage whenever data changes
   useEffect(() => {
-    localStorage.setItem('retreatPhotos', JSON.stringify(photos));
+    localStorage.setItem('retreatCommunityPhotos', JSON.stringify(photos));
   }, [photos]);
 
   useEffect(() => {
-    localStorage.setItem('retreatPrayerRequests', JSON.stringify(prayerRequests));
+    localStorage.setItem('retreatCommunityPrayers', JSON.stringify(prayerRequests));
   }, [prayerRequests]);
 
   useEffect(() => {
-    localStorage.setItem('retreatTestimonials', JSON.stringify(testimonials));
+    localStorage.setItem('retreatCommunityTestimonials', JSON.stringify(testimonials));
   }, [testimonials]);
 
   useEffect(() => {
-    if (userName) {
-      localStorage.setItem('retreatUserName', userName);
-    }
-  }, [userName]);
+    localStorage.setItem('retreatNotifications', JSON.stringify(notifications));
+  }, [notifications]);
 
+  useEffect(() => {
+    localStorage.setItem('retreatCurrentUser', JSON.stringify(currentUser));
+  }, [currentUser]);
+
+  // Simulate community activity
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     
@@ -219,8 +267,44 @@ export default function GreenwichSDARetreatApp() {
     // Set mock weather data
     setWeather(mockWeatherData);
 
-    return () => clearInterval(timer);
-  }, []);
+    // Simulate occasional community activity
+    const simulateActivity = () => {
+      if (Math.random() > 0.7 && prayerRequests.length > 0) {
+        const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+        const randomPrayer = prayerRequests[Math.floor(Math.random() * prayerRequests.length)];
+        
+        if (randomPrayer.userId !== randomUser.id) {
+          const newNotification = {
+            id: Date.now(),
+            type: 'prayer',
+            message: `${randomUser.name} prayed for your request`,
+            userId: randomUser.id,
+            itemId: randomPrayer.id,
+            timestamp: new Date().toISOString(),
+            read: false
+          };
+          
+          setNotifications(prev => [newNotification, ...prev]);
+          
+          // Increment prayer count
+          setPrayerRequests(prev =>
+            prev.map(prayer =>
+              prayer.id === randomPrayer.id
+                ? { ...prayer, prayers: prayer.prayers + 1 }
+                : prayer
+            )
+          );
+        }
+      }
+    };
+
+    const activityInterval = setInterval(simulateActivity, 30000); // Every 30 seconds
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(activityInterval);
+    };
+  }, [prayerRequests]);
 
   const getDaySchedule = () => {
     const day = currentTime.getDay();
@@ -242,14 +326,33 @@ export default function GreenwichSDARetreatApp() {
     return (R * c).toFixed(1);
   };
 
-  // Prayer request functions
-  const addPrayerRequest = useCallback((text, author = 'Anonymous') => {
+  // Add notification helper
+  const addNotification = useCallback((type, message, userId = null, itemId = null) => {
+    const newNotification = {
+      id: Date.now(),
+      type,
+      message,
+      userId,
+      itemId,
+      timestamp: new Date().toISOString(),
+      read: false
+    };
+    
+    setNotifications(prev => [newNotification, ...prev]);
+  }, []);
+
+  // Prayer request functions with notifications
+  const addPrayerRequest = useCallback((text) => {
     const newRequest = {
       id: Date.now(),
       text,
-      author: author || 'Anonymous',
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      userColor: currentUser.color,
       timestamp: new Date().toISOString(),
       prayers: 0,
+      comments: [],
       userLocation: currentLocation ? {
         lat: currentLocation.lat,
         lng: currentLocation.lng
@@ -257,52 +360,139 @@ export default function GreenwichSDARetreatApp() {
     };
     
     setPrayerRequests(prev => [newRequest, ...prev]);
+    
+    // Notify other users
+    addNotification('new_prayer', `${currentUser.name} shared a prayer request`, currentUser.id, newRequest.id);
+    
     return newRequest;
-  }, [currentLocation]);
+  }, [currentUser, currentLocation, addNotification]);
 
-  const incrementPrayerCount = useCallback((id) => {
+  const incrementPrayerCount = useCallback((prayerId) => {
     setPrayerRequests(prev =>
-      prev.map(request =>
-        request.id === id
-          ? { ...request, prayers: request.prayers + 1 }
-          : request
+      prev.map(prayer =>
+        prayer.id === prayerId
+          ? { 
+              ...prayer, 
+              prayers: prayer.prayers + 1,
+              prayedBy: [...(prayer.prayedBy || []), currentUser.id]
+            }
+          : prayer
       )
     );
-  }, []);
+    
+    // Find prayer owner
+    const prayer = prayerRequests.find(p => p.id === prayerId);
+    if (prayer && prayer.userId !== currentUser.id) {
+      addNotification('prayer', `${currentUser.name} prayed for your request`, currentUser.id, prayerId);
+    }
+  }, [prayerRequests, currentUser, addNotification]);
+
+  const addPrayerComment = useCallback((prayerId, text) => {
+    const newComment = {
+      id: Date.now(),
+      text,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      userColor: currentUser.color,
+      timestamp: new Date().toISOString(),
+      replies: []
+    };
+    
+    setPrayerRequests(prev =>
+      prev.map(prayer =>
+        prayer.id === prayerId
+          ? { ...prayer, comments: [...prayer.comments, newComment] }
+          : prayer
+      )
+    );
+    
+    // Notify prayer owner
+    const prayer = prayerRequests.find(p => p.id === prayerId);
+    if (prayer && prayer.userId !== currentUser.id) {
+      addNotification('comment', `${currentUser.name} commented on your prayer`, currentUser.id, prayerId);
+    }
+  }, [prayerRequests, currentUser, addNotification]);
 
   const deletePrayerRequest = useCallback((id) => {
     setPrayerRequests(prev => prev.filter(request => request.id !== id));
   }, []);
 
-  // Testimonial functions
-  const addTestimonial = useCallback((text, author = 'Brother in Christ') => {
+  // Testimonial functions with notifications
+  const addTestimonial = useCallback((text) => {
     const newTestimonial = {
       id: Date.now(),
       text,
-      author: author || 'Brother in Christ',
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      userColor: currentUser.color,
       timestamp: new Date().toISOString(),
-      likes: 0
+      likes: 0,
+      likedBy: [],
+      comments: []
     };
     
     setTestimonials(prev => [newTestimonial, ...prev]);
+    
+    // Notify community
+    addNotification('new_testimonial', `${currentUser.name} shared a testimony`, currentUser.id, newTestimonial.id);
+    
     return newTestimonial;
-  }, []);
+  }, [currentUser, addNotification]);
 
-  const likeTestimonial = useCallback((id) => {
+  const likeTestimonial = useCallback((testimonialId) => {
     setTestimonials(prev =>
       prev.map(testimonial =>
-        testimonial.id === id
-          ? { ...testimonial, likes: testimonial.likes + 1 }
+        testimonial.id === testimonialId
+          ? { 
+              ...testimonial, 
+              likes: testimonial.likes + 1,
+              likedBy: [...testimonial.likedBy, currentUser.id]
+            }
           : testimonial
       )
     );
-  }, []);
+    
+    // Find testimonial owner
+    const testimonial = testimonials.find(t => t.id === testimonialId);
+    if (testimonial && testimonial.userId !== currentUser.id) {
+      addNotification('like', `${currentUser.name} liked your testimony`, currentUser.id, testimonialId);
+    }
+  }, [testimonials, currentUser, addNotification]);
+
+  const addTestimonialComment = useCallback((testimonialId, text) => {
+    const newComment = {
+      id: Date.now(),
+      text,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      userColor: currentUser.color,
+      timestamp: new Date().toISOString(),
+      replies: []
+    };
+    
+    setTestimonials(prev =>
+      prev.map(testimonial =>
+        testimonial.id === testimonialId
+          ? { ...testimonial, comments: [...testimonial.comments, newComment] }
+          : testimonial
+      )
+    );
+    
+    // Notify testimonial owner
+    const testimonial = testimonials.find(t => t.id === testimonialId);
+    if (testimonial && testimonial.userId !== currentUser.id) {
+      addNotification('comment', `${currentUser.name} commented on your testimony`, currentUser.id, testimonialId);
+    }
+  }, [testimonials, currentUser, addNotification]);
 
   const deleteTestimonial = useCallback((id) => {
     setTestimonials(prev => prev.filter(testimonial => testimonial.id !== id));
   }, []);
 
-  // Photo functions
+  // Photo functions with notifications
   const handlePhotoUpload = useCallback((e) => {
     const file = e.target.files[0];
     if (file) {
@@ -312,10 +502,14 @@ export default function GreenwichSDARetreatApp() {
           id: Date.now(),
           src: reader.result,
           caption: '',
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userAvatar: currentUser.avatar,
+          userColor: currentUser.color,
           timestamp: new Date().toISOString(),
           comments: [],
           likes: 0,
-          author: userName || 'Anonymous',
+          likedBy: [],
           location: currentLocation ? {
             lat: currentLocation.lat,
             lng: currentLocation.lng
@@ -323,10 +517,13 @@ export default function GreenwichSDARetreatApp() {
         };
         
         setPhotos(prev => [newPhoto, ...prev]);
+        
+        // Notify community
+        addNotification('new_photo', `${currentUser.name} shared a photo`, currentUser.id, newPhoto.id);
       };
       reader.readAsDataURL(file);
     }
-  }, [userName, currentLocation]);
+  }, [currentUser, currentLocation, addNotification]);
 
   const updatePhotoCaption = useCallback((photoId, caption) => {
     setPhotos(prev =>
@@ -338,40 +535,113 @@ export default function GreenwichSDARetreatApp() {
     );
   }, []);
 
-  const addCommentToPhoto = useCallback((photoId, commentText) => {
-    setPhotos(prev =>
-      prev.map(photo =>
-        photo.id === photoId
-          ? {
-              ...photo,
-              comments: [
-                ...photo.comments,
-                {
-                  id: Date.now(),
-                  text: commentText,
-                  author: userName || 'Anonymous',
-                  timestamp: new Date().toISOString()
-                }
-              ]
-            }
-          : photo
-      )
-    );
-  }, [userName]);
-
   const likePhoto = useCallback((photoId) => {
     setPhotos(prev =>
       prev.map(photo =>
         photo.id === photoId
-          ? { ...photo, likes: photo.likes + 1 }
+          ? { 
+              ...photo, 
+              likes: photo.likes + 1,
+              likedBy: [...photo.likedBy, currentUser.id]
+            }
           : photo
       )
     );
-  }, []);
+    
+    // Find photo owner
+    const photo = photos.find(p => p.id === photoId);
+    if (photo && photo.userId !== currentUser.id) {
+      addNotification('like', `${currentUser.name} liked your photo`, currentUser.id, photoId);
+    }
+  }, [photos, currentUser, addNotification]);
+
+  const addPhotoComment = useCallback((photoId, text) => {
+    const newComment = {
+      id: Date.now(),
+      text,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      userColor: currentUser.color,
+      timestamp: new Date().toISOString(),
+      replies: []
+    };
+    
+    setPhotos(prev =>
+      prev.map(photo =>
+        photo.id === photoId
+          ? { ...photo, comments: [...photo.comments, newComment] }
+          : photo
+      )
+    );
+    
+    // Notify photo owner
+    const photo = photos.find(p => p.id === photoId);
+    if (photo && photo.userId !== currentUser.id) {
+      addNotification('comment', `${currentUser.name} commented on your photo`, currentUser.id, photoId);
+    }
+  }, [photos, currentUser, addNotification]);
 
   const deletePhoto = useCallback((id) => {
     setPhotos(prev => prev.filter(photo => photo.id !== id));
   }, []);
+
+  // Edit functions
+  const startEditing = useCallback((itemId, type, currentText) => {
+    setEditingItem({ id: itemId, type });
+    setEditText(currentText);
+  }, []);
+
+  const saveEdit = useCallback(() => {
+    if (!editingItem || !editText.trim()) return;
+
+    if (editingItem.type === 'prayer') {
+      setPrayerRequests(prev =>
+        prev.map(prayer =>
+          prayer.id === editingItem.id
+            ? { ...prayer, text: editText }
+            : prayer
+        )
+      );
+    } else if (editingItem.type === 'testimonial') {
+      setTestimonials(prev =>
+        prev.map(testimonial =>
+          testimonial.id === editingItem.id
+            ? { ...testimonial, text: editText }
+            : testimonial
+        )
+      );
+    }
+
+    setEditingItem(null);
+    setEditText('');
+  }, [editingItem, editText]);
+
+  // Mark notifications as read
+  const markNotificationAsRead = useCallback((id) => {
+    setNotifications(prev =>
+      prev.map(notification =>
+        notification.id === id
+          ? { ...notification, read: true }
+          : notification
+      )
+    );
+  }, []);
+
+  const markAllNotificationsAsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
+
+  // Refresh community data
+  const refreshCommunityData = useCallback(() => {
+    setIsRefreshing(true);
+    // Simulate network delay
+    setTimeout(() => {
+      // In a real app, you would fetch new data here
+      setIsRefreshing(false);
+      addNotification('refresh', 'Community data refreshed');
+    }, 1000);
+  }, [addNotification]);
 
   // Get weather icon based on condition
   const getWeatherIcon = (condition) => {
@@ -385,20 +655,25 @@ export default function GreenwichSDARetreatApp() {
 
   // User stats calculation
   const userStats = {
-    prayers: prayerRequests.filter(p => p.author === userName).length,
-    testimonials: testimonials.filter(t => t.author === userName).length,
-    photos: photos.filter(p => p.author === userName).length,
+    prayers: prayerRequests.filter(p => p.userId === currentUser.id).length,
+    testimonials: testimonials.filter(t => t.userId === currentUser.id).length,
+    photos: photos.filter(p => p.userId === currentUser.id).length,
     totalPrayersReceived: prayerRequests
-      .filter(p => p.author === userName)
-      .reduce((total, p) => total + p.prayers, 0)
+      .filter(p => p.userId === currentUser.id)
+      .reduce((total, p) => total + p.prayers, 0),
+    totalLikesReceived: [
+      ...testimonials.filter(t => t.userId === currentUser.id),
+      ...photos.filter(p => p.userId === currentUser.id)
+    ].reduce((total, item) => total + item.likes, 0)
   };
 
   const currentSchedule = getDaySchedule();
   const currentHour = currentTime.getHours() + (currentTime.getMinutes() / 60);
+  const unreadNotifications = notifications.filter(n => !n.read).length;
 
   // Reset all data function
   const resetAllData = () => {
-    if (window.confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+    if (window.confirm('Are you sure you want to reset all community data? This cannot be undone.')) {
       localStorage.clear();
       window.location.reload();
     }
@@ -414,7 +689,17 @@ export default function GreenwichSDARetreatApp() {
               <h1 className="text-3xl font-bold tracking-tight">Greenwich SDA</h1>
               <p className="text-emerald-200 text-sm mt-1">Men's Ministry - Lake District Retreat 2026</p>
             </div>
-            <Mountain className="w-12 h-12 text-emerald-200" />
+            <div className="flex items-center gap-4">
+              <button
+                onClick={refreshCommunityData}
+                disabled={isRefreshing}
+                className="flex items-center gap-2 bg-emerald-700/50 hover:bg-emerald-600/50 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="text-sm">Refresh</span>
+              </button>
+              <Mountain className="w-12 h-12 text-emerald-200" />
+            </div>
           </div>
           <div className="mt-4 flex items-center gap-4 text-sm flex-wrap">
             <div className="flex items-center gap-2 bg-emerald-900/40 px-3 py-1.5 rounded-full">
@@ -437,11 +722,6 @@ export default function GreenwichSDARetreatApp() {
                     <span className="text-xl font-bold text-white">{weather.temperature}°</span>
                     <span className="text-xs text-sky-200">C</span>
                   </div>
-                  <div className="h-4 w-px bg-sky-600/50"></div>
-                  <div className="flex items-center gap-1">
-                    <Thermometer className="w-3 h-3 text-amber-300" />
-                    <span className="text-xs text-slate-200">Feels {weather.feelsLike}°</span>
-                  </div>
                 </div>
               </div>
             )}
@@ -451,12 +731,97 @@ export default function GreenwichSDARetreatApp() {
               onClick={() => setShowUserModal(true)}
               className="flex items-center gap-2 bg-emerald-700/50 hover:bg-emerald-600/50 px-3 py-1.5 rounded-full transition-colors"
             >
-              <Users className="w-4 h-4" />
-              <span>{userName || 'Set Your Name'}</span>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${currentUser.bg}`}>
+                <span className="text-sm">{currentUser.avatar}</span>
+              </div>
+              <span>{currentUser.name}</span>
+            </button>
+            
+            {/* Notifications Button */}
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative flex items-center gap-2 bg-emerald-700/50 hover:bg-emerald-600/50 px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Bell className="w-4 h-4" />
+              <span>Notifications</span>
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {unreadNotifications}
+                </span>
+              )}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Notifications Panel */}
+      {showNotifications && (
+        <div className="fixed inset-0 z-50 flex justify-end pt-16">
+          <div className="bg-gradient-to-b from-slate-800 to-slate-900 w-full max-w-md h-full border-l border-slate-700 shadow-2xl">
+            <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-emerald-300">Notifications</h2>
+              <div className="flex items-center gap-2">
+                {unreadNotifications > 0 && (
+                  <button
+                    onClick={markAllNotificationsAsRead}
+                    className="text-sm text-emerald-400 hover:text-emerald-300"
+                  >
+                    Mark all read
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="text-slate-400 hover:text-white p-1"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="overflow-y-auto h-[calc(100vh-8rem)]">
+              {notifications.length > 0 ? (
+                <div className="divide-y divide-slate-700">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-4 hover:bg-slate-800/50 transition-colors ${!notification.read ? 'bg-slate-800/30' : ''}`}
+                      onClick={() => markNotificationAsRead(notification.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          {notification.type === 'prayer' && <Heart className="w-4 h-4 text-emerald-400" />}
+                          {notification.type === 'like' && <ThumbsUp className="w-4 h-4 text-amber-400" />}
+                          {notification.type === 'comment' && <MessageCircle className="w-4 h-4 text-blue-400" />}
+                          {notification.type === 'new_photo' && <Camera className="w-4 h-4 text-rose-400" />}
+                          {notification.type === 'new_testimonial' && <Users className="w-4 h-4 text-teal-400" />}
+                          {notification.type === 'refresh' && <RefreshCw className="w-4 h-4 text-cyan-400" />}
+                          {notification.type === 'welcome' && <Users className="w-4 h-4 text-purple-400" />}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-slate-200">{notification.message}</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {new Date(notification.timestamp).toLocaleTimeString('en-GB', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2"></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <Bell className="w-12 h-12 mx-auto mb-4 text-slate-600" />
+                  <p className="text-slate-400">No notifications yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* User Profile Modal */}
       {showUserModal && (
@@ -473,16 +838,29 @@ export default function GreenwichSDARetreatApp() {
             </div>
             
             <div className="space-y-4">
+              <div className="flex items-center gap-4 mb-6">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl ${currentUser.bg}`}>
+                  {currentUser.avatar}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">{currentUser.name}</h3>
+                  <p className="text-sm text-slate-400">Retreat Participant</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                    <span className="text-xs text-emerald-400">Online</span>
+                  </div>
+                </div>
+              </div>
+              
               <div>
-                <label className="block text-sm text-slate-300 mb-2">Your Name</label>
+                <label className="block text-sm text-slate-300 mb-2">Change Your Name</label>
                 <input
                   type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
+                  value={currentUser.name}
+                  onChange={(e) => setCurrentUser(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Enter your name"
                   className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                <p className="text-xs text-slate-400 mt-1">This will be shown with your submissions</p>
               </div>
               
               <div className="pt-4 border-t border-slate-700">
@@ -501,20 +879,41 @@ export default function GreenwichSDARetreatApp() {
                     <div className="text-sm text-slate-300">Photos</div>
                   </div>
                   <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-amber-400">{userStats.totalPrayersReceived}</div>
-                    <div className="text-sm text-slate-300">Prayers Received</div>
+                    <div className="text-2xl font-bold text-amber-400">{userStats.totalLikesReceived}</div>
+                    <div className="text-sm text-slate-300">Likes Received</div>
                   </div>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-slate-700">
+                <h3 className="text-lg font-semibold mb-3">Community Members</h3>
+                <div className="flex flex-wrap gap-2">
+                  {allUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                        user.id === currentUser.id
+                          ? 'bg-emerald-500/20 border border-emerald-500/30'
+                          : 'bg-slate-700/30'
+                      }`}
+                    >
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${user.bg}`}>
+                        <span className="text-xs">{user.avatar}</span>
+                      </div>
+                      <span className="text-sm">{user.name}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               
               <div className="pt-4 border-t border-slate-700">
                 <button
                   onClick={resetAllData}
-                  className="w-full bg-gradient-to-r from-red-700/30 to-red-800/30 hover:from-red-600/40 hover:to-red-700/40 py-3 rounded-lg font-semibold transition-all border border-red-700/30"
+                  className="w-full bg-gradient-to-r from-red-700/30 to-red-800/30 hover:from-red-600/40 hover:to-red-700/40 py-3 rounded-lg font-semibold transition-all border border-red-700/30 mb-2"
                 >
-                  Reset All Data
+                  Reset All Community Data
                 </button>
-                <p className="text-xs text-slate-400 mt-2 text-center">This will clear all prayer requests, testimonials, and photos</p>
+                <p className="text-xs text-slate-400 text-center">This will clear all shared content</p>
               </div>
               
               <button
@@ -561,7 +960,7 @@ export default function GreenwichSDARetreatApp() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         
-        {/* Schedule Tab */}
+        {/* Schedule Tab (unchanged) */}
         {activeTab === 'schedule' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
@@ -649,7 +1048,7 @@ export default function GreenwichSDARetreatApp() {
           </div>
         )}
 
-        {/* Location Tab */}
+        {/* Location Tab (unchanged) */}
         {activeTab === 'location' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
@@ -835,7 +1234,7 @@ export default function GreenwichSDARetreatApp() {
           </div>
         )}
 
-        {/* Devotional Tab */}
+        {/* Devotional Tab (unchanged) */}
         {activeTab === 'devotional' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-xl">
@@ -884,16 +1283,28 @@ export default function GreenwichSDARetreatApp() {
           </div>
         )}
 
-        {/* Photos Tab */}
+        {/* Photos Tab - Enhanced with Community */}
         {activeTab === 'photos' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Retreat Photos</h2>
-              <p className="text-pink-100">Capture and share memories</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Community Photos</h2>
+                  <p className="text-pink-100">Share and interact with retreat memories</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-pink-500/20 px-3 py-1 rounded-full">
+                    <span className="text-sm">{photos.length} photos</span>
+                  </div>
+                  <div className="bg-rose-500/20 px-3 py-1 rounded-full">
+                    <span className="text-sm">{allUsers.length} members</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Upload Section */}
-            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border-2 border-dashed border-slate-600 text-center">
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border-2 border-dashed border-slate-600 text-center hover:border-pink-500 transition-colors">
               <label className="cursor-pointer block">
                 <input
                   type="file"
@@ -902,97 +1313,147 @@ export default function GreenwichSDARetreatApp() {
                   className="hidden"
                 />
                 <Upload className="w-12 h-12 mx-auto mb-4 text-pink-400" />
-                <p className="text-lg font-semibold mb-2">Upload a Photo</p>
-                <p className="text-slate-400 text-sm">Click to select a photo from your device</p>
+                <p className="text-lg font-semibold mb-2">Upload a Photo to Share</p>
+                <p className="text-slate-400 text-sm">Share your retreat moments with the community</p>
               </label>
             </div>
 
-            {/* Photo Grid */}
+            {/* Photo Grid with Community Interactions */}
             {photos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {photos.map((photo) => (
-                  <div key={photo.id} className="bg-slate-800/70 backdrop-blur rounded-xl overflow-hidden border border-slate-700 hover:border-pink-500 transition-all">
-                    <img src={photo.src} alt="Retreat" className="w-full h-64 object-cover" />
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="text-sm font-medium text-pink-300">{photo.author}</p>
-                          <p className="text-xs text-slate-400">
-                            {new Date(photo.timestamp).toLocaleDateString('en-GB', { 
-                              day: 'numeric', 
-                              month: 'long', 
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => likePhoto(photo.id)}
-                            className="flex items-center gap-1 text-pink-400 hover:text-pink-300"
-                          >
-                            <Heart className={`w-4 h-4 ${photo.likes > 0 ? 'fill-pink-400' : ''}`} />
-                            <span className="text-xs">{photo.likes}</span>
-                          </button>
-                          {photo.author === userName && (
+                  <div key={photo.id} className="bg-slate-800/70 backdrop-blur rounded-xl overflow-hidden border border-slate-700 hover:border-pink-500 transition-all group">
+                    <div className="relative">
+                      <img src={photo.src} alt="Retreat" className="w-full h-64 object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <div className="flex justify-between items-center">
                             <button
-                              onClick={() => deletePhoto(photo.id)}
-                              className="text-xs text-slate-500 hover:text-red-400"
+                              onClick={() => likePhoto(photo.id)}
+                              className="flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full"
                             >
-                              Delete
+                              <Heart className={`w-4 h-4 ${photo.likedBy?.includes(currentUser.id) ? 'fill-pink-400 text-pink-400' : 'text-white'}`} />
+                              <span className="text-sm">{photo.likes}</span>
                             </button>
-                          )}
+                            <button className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                              <Share2 className="w-4 h-4 text-white" />
+                            </button>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${photo.userColor.replace('text', 'bg')}`}>
+                            <span className="text-sm">{photo.userAvatar}</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-pink-300">{photo.userName}</p>
+                            <p className="text-xs text-slate-400">
+                              {new Date(photo.timestamp).toLocaleDateString('en-GB', { 
+                                day: 'numeric', 
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {photo.userId === currentUser.id && (
+                          <div className="relative">
+                            <button
+                              onClick={() => startEditing(photo.id, 'photo', photo.caption)}
+                              className="text-slate-500 hover:text-white p-1"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                       
-                      <input
-                        type="text"
-                        value={photoCaption[photo.id] || photo.caption}
-                        onChange={(e) => {
-                          setPhotoCaption({...photoCaption, [photo.id]: e.target.value});
-                          updatePhotoCaption(photo.id, e.target.value);
-                        }}
-                        placeholder="Add a caption..."
-                        className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 mb-3"
-                      />
+                      {editingItem?.id === photo.id && editingItem.type === 'photo' ? (
+                        <div className="mb-3">
+                          <input
+                            type="text"
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                            placeholder="Add a caption..."
+                          />
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={saveEdit}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-500 py-1.5 rounded-lg text-sm"
+                            >
+                              <Check className="w-4 h-4 mx-auto" />
+                            </button>
+                            <button
+                              onClick={() => setEditingItem(null)}
+                              className="flex-1 bg-red-600/50 hover:bg-red-500/50 py-1.5 rounded-lg text-sm"
+                            >
+                              <X className="w-4 h-4 mx-auto" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-slate-300 mb-3">{photo.caption || "No caption"}</p>
+                      )}
                       
                       {/* Comments Section */}
-                      <div className="space-y-2">
-                        {photo.comments.map((comment) => (
-                          <div key={comment.id} className="text-xs bg-slate-700/30 rounded p-2">
-                            <div className="flex justify-between">
-                              <span className="font-medium text-pink-200">{comment.author}</span>
-                              <span className="text-slate-500">
+                      <div className="space-y-3">
+                        {photo.comments.slice(0, 2).map((comment) => (
+                          <div key={comment.id} className="text-sm bg-slate-700/30 rounded p-2">
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${comment.userColor.replace('text', 'bg')}`}>
+                                  <span className="text-xs">{comment.userAvatar}</span>
+                                </div>
+                                <span className="font-medium text-pink-200">{comment.userName}</span>
+                              </div>
+                              <span className="text-xs text-slate-500">
                                 {new Date(comment.timestamp).toLocaleTimeString('en-GB', { 
                                   hour: '2-digit', 
                                   minute: '2-digit' 
                                 })}
                               </span>
                             </div>
-                            <p className="text-slate-300 mt-1">{comment.text}</p>
+                            <p className="text-slate-300 mt-1 ml-8">{comment.text}</p>
                           </div>
                         ))}
                         
+                        {photo.comments.length > 2 && (
+                          <p className="text-xs text-slate-500 text-center">
+                            +{photo.comments.length - 2} more comments
+                          </p>
+                        )}
+                        
                         <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={photoComment[photo.id] || ''}
-                            onChange={(e) => setPhotoComment({...photoComment, [photo.id]: e.target.value})}
-                            placeholder="Add a comment..."
-                            className="flex-1 bg-slate-700/50 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-                          />
-                          <button
-                            onClick={() => {
-                              if (photoComment[photo.id]?.trim()) {
-                                addCommentToPhoto(photo.id, photoComment[photo.id]);
-                                setPhotoComment({...photoComment, [photo.id]: ''});
-                              }
-                            }}
-                            className="text-pink-400 hover:text-pink-300 text-sm px-3"
-                          >
-                            Post
-                          </button>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${currentUser.bg}`}>
+                            <span className="text-xs">{currentUser.avatar}</span>
+                          </div>
+                          <div className="flex-1 flex gap-2">
+                            <input
+                              type="text"
+                              value={photoComment[photo.id] || ''}
+                              onChange={(e) => setPhotoComment({...photoComment, [photo.id]: e.target.value})}
+                              placeholder="Add a comment..."
+                              className="flex-1 bg-slate-700/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                            />
+                            <button
+                              onClick={() => {
+                                if (photoComment[photo.id]?.trim()) {
+                                  addPhotoComment(photo.id, photoComment[photo.id]);
+                                  setPhotoComment({...photoComment, [photo.id]: ''});
+                                }
+                              }}
+                              className="text-pink-400 hover:text-pink-300 text-sm px-3"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1002,96 +1463,246 @@ export default function GreenwichSDARetreatApp() {
             ) : (
               <div className="bg-slate-800/70 backdrop-blur rounded-xl p-12 border border-slate-700 text-center">
                 <Camera className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-                <p className="text-slate-400">No photos uploaded yet. Start capturing memories!</p>
+                <p className="text-slate-400">No photos shared yet. Be the first to share a memory!</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Prayer Tab */}
+        {/* Prayer Tab - Enhanced Community Interaction */}
         {activeTab === 'prayer' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Prayer Requests</h2>
-              <p className="text-amber-100">Lift each other up in prayer</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Community Prayer Wall</h2>
+                  <p className="text-amber-100">Lift each other up in prayer together</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-amber-500/20 px-3 py-1 rounded-full">
+                    <span className="text-sm">{prayerRequests.length} prayers</span>
+                  </div>
+                  <div className="bg-orange-500/20 px-3 py-1 rounded-full">
+                    <span className="text-sm">{prayerRequests.reduce((sum, p) => sum + p.prayers, 0)} prayers received</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Submit Prayer Request */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-              <h3 className="text-lg font-semibold mb-4">Submit a Prayer Request</h3>
+              <h3 className="text-lg font-semibold mb-4">Share a Prayer Request</h3>
               <textarea
                 value={prayerText}
                 onChange={(e) => setPrayerText(e.target.value)}
-                placeholder="Share what's on your heart..."
+                placeholder="Share what's on your heart with the community..."
                 className="w-full bg-slate-700/50 rounded-lg px-4 py-3 min-h-32 focus:outline-none focus:ring-2 focus:ring-amber-400 mb-4"
               />
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => {
                     if (prayerText.trim()) {
-                      addPrayerRequest(prayerText, userName);
+                      addPrayerRequest(prayerText);
                       setPrayerText('');
-                      alert('Prayer request submitted! 🙏');
                     }
                   }}
                   className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 px-6 py-3 rounded-lg font-semibold transition-all"
                 >
-                  Submit Prayer Request
+                  Share Prayer Request
                 </button>
                 <div className="text-sm text-slate-400">
-                  {userName ? `Posting as: ${userName}` : 'Set your name in profile'}
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${currentUser.bg}`}>
+                      <span className="text-xs">{currentUser.avatar}</span>
+                    </div>
+                    <span>Posting as: {currentUser.name}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Prayer List */}
+            {/* Prayer List with Community Interactions */}
             <div className="space-y-4">
               {prayerRequests.length > 0 ? (
                 prayerRequests.map((request) => (
-                  <div key={request.id} className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700 hover:border-amber-500/50 transition-colors">
+                  <div key={request.id} className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700 hover:border-amber-500/50 transition-colors group">
                     <div className="flex items-start gap-4">
-                      <Heart className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
+                      <div className="flex-shrink-0">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${request.userColor.replace('text', 'bg')}`}>
+                          <span className="text-lg">{request.userAvatar}</span>
+                        </div>
+                      </div>
                       <div className="flex-1">
-                        <p className="text-slate-300 leading-relaxed mb-3">{request.text}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="text-amber-300 font-medium">{request.author}</span>
-                            <span className="text-slate-500">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="text-lg font-semibold text-amber-300">{request.userName}</h3>
+                            <p className="text-xs text-slate-400">
                               {new Date(request.timestamp).toLocaleDateString('en-GB', { 
                                 day: 'numeric', 
                                 month: 'short',
                                 hour: '2-digit',
                                 minute: '2-digit'
                               })}
-                            </span>
-                            {request.userLocation && (
-                              <span className="text-xs text-slate-400 flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {calculateDistance(
-                                  request.userLocation.lat,
-                                  request.userLocation.lng,
-                                  baseLocation.lat,
-                                  baseLocation.lng
-                                )} km from base
-                              </span>
-                            )}
+                              {request.userLocation && (
+                                <span className="ml-2">
+                                  • {calculateDistance(
+                                    request.userLocation.lat,
+                                    request.userLocation.lng,
+                                    baseLocation.lat,
+                                    baseLocation.lng
+                                  )} km from base
+                                </span>
+                              )}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => incrementPrayerCount(request.id)}
-                              className="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition-colors"
-                            >
-                              <Heart className={`w-4 h-4 ${request.prayers > 0 ? 'fill-amber-400' : ''}`} />
-                              <span>{request.prayers} prayed</span>
-                            </button>
-                            {userName === request.author && (
+                          
+                          {request.userId === currentUser.id && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => startEditing(request.id, 'prayer', request.text)}
+                                className="text-slate-500 hover:text-amber-400"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
                               <button
                                 onClick={() => deletePrayerRequest(request.id)}
-                                className="text-slate-500 hover:text-red-400 text-sm"
+                                className="text-slate-500 hover:text-red-400"
                               >
-                                Delete
+                                <Trash2 className="w-4 h-4" />
                               </button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {editingItem?.id === request.id && editingItem.type === 'prayer' ? (
+                          <div className="mb-4">
+                            <textarea
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              className="w-full bg-slate-700/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                              rows="3"
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={saveEdit}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-500 py-1.5 rounded-lg text-sm"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingItem(null)}
+                                className="flex-1 bg-red-600/50 hover:bg-red-500/50 py-1.5 rounded-lg text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-slate-300 leading-relaxed mb-4">{request.text}</p>
+                        )}
+                        
+                        {/* Interaction Buttons */}
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                          <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => incrementPrayerCount(request.id)}
+                              className="flex items-center gap-2 text-amber-400 hover:text-amber-300 transition-colors"
+                            >
+                              <Heart className={`w-5 h-5 ${request.prayedBy?.includes(currentUser.id) ? 'fill-amber-400' : ''}`} />
+                              <span className="font-medium">{request.prayers} prayed</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                const commentText = commentText[request.id] || '';
+                                if (commentText.trim()) {
+                                  addPrayerComment(request.id, commentText);
+                                  setCommentText({...commentText, [request.id]: ''});
+                                }
+                              }}
+                              className="flex items-center gap-2 text-slate-400 hover:text-white"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              <span>Comment</span>
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {request.prayedBy?.slice(0, 3).map((userId, idx) => {
+                              const user = allUsers.find(u => u.id === userId);
+                              return user ? (
+                                <div
+                                  key={idx}
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center ${user.bg}`}
+                                  title={`Prayed by ${user.name}`}
+                                >
+                                  <span className="text-xs">{user.avatar}</span>
+                                </div>
+                              ) : null;
+                            })}
+                            {request.prayedBy && request.prayedBy.length > 3 && (
+                              <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs">
+                                +{request.prayedBy.length - 3}
+                              </div>
                             )}
+                          </div>
+                        </div>
+                        
+                        {/* Comments Section */}
+                        {request.comments.length > 0 && (
+                          <div className="mt-4 space-y-3">
+                            <p className="text-sm font-medium text-slate-400">Comments ({request.comments.length})</p>
+                            {request.comments.slice(0, 2).map((comment) => (
+                              <div key={comment.id} className="bg-slate-700/30 rounded-lg p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${comment.userColor.replace('text', 'bg')}`}>
+                                    <span className="text-xs">{comment.userAvatar}</span>
+                                  </div>
+                                  <span className="font-medium text-amber-200">{comment.userName}</span>
+                                  <span className="text-xs text-slate-500">
+                                    {new Date(comment.timestamp).toLocaleTimeString('en-GB', {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="text-slate-300 text-sm">{comment.text}</p>
+                              </div>
+                            ))}
+                            
+                            {request.comments.length > 2 && (
+                              <p className="text-xs text-slate-500 text-center">
+                                +{request.comments.length - 2} more comments
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Add Comment */}
+                        <div className="mt-4 flex gap-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentUser.bg}`}>
+                            <span className="text-sm">{currentUser.avatar}</span>
+                          </div>
+                          <div className="flex-1 flex gap-2">
+                            <input
+                              type="text"
+                              value={commentText[request.id] || ''}
+                              onChange={(e) => setCommentText({...commentText, [request.id]: e.target.value})}
+                              placeholder="Add a comment of support..."
+                              className="flex-1 bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            />
+                            <button
+                              onClick={() => {
+                                const text = commentText[request.id] || '';
+                                if (text.trim()) {
+                                  addPrayerComment(request.id, text);
+                                  setCommentText({...commentText, [request.id]: ''});
+                                }
+                              }}
+                              className="bg-amber-600 hover:bg-amber-500 px-4 rounded-lg text-sm"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1102,18 +1713,31 @@ export default function GreenwichSDARetreatApp() {
                 <div className="bg-slate-800/70 backdrop-blur rounded-xl p-12 border border-slate-700 text-center">
                   <Heart className="w-16 h-16 mx-auto mb-4 text-slate-600" />
                   <p className="text-slate-400">No prayer requests yet. Be the first to share!</p>
+                  <p className="text-sm text-slate-500 mt-2">Your prayer could be exactly what someone needs to hear.</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Testimonials Tab */}
+        {/* Testimonials Tab - Enhanced Community Interaction */}
         {activeTab === 'testimonials' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Testimonials</h2>
-              <p className="text-teal-100">Share how God is working in your life</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Community Testimonies</h2>
+                  <p className="text-teal-100">Share how God is working in your lives together</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-teal-500/20 px-3 py-1 rounded-full">
+                    <span className="text-sm">{testimonials.length} testimonies</span>
+                  </div>
+                  <div className="bg-cyan-500/20 px-3 py-1 rounded-full">
+                    <span className="text-sm">{testimonials.reduce((sum, t) => sum + t.likes, 0)} encouragements</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Submit Testimonial */}
@@ -1122,16 +1746,15 @@ export default function GreenwichSDARetreatApp() {
               <textarea
                 value={testimonialText}
                 onChange={(e) => setTestimonialText(e.target.value)}
-                placeholder="How has God moved in your life during this retreat?"
+                placeholder="How has God moved in your life during this retreat? Share to encourage others..."
                 className="w-full bg-slate-700/50 rounded-lg px-4 py-3 min-h-32 focus:outline-none focus:ring-2 focus:ring-teal-400 mb-4"
               />
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => {
                     if (testimonialText.trim()) {
-                      addTestimonial(testimonialText, userName);
+                      addTestimonial(testimonialText);
                       setTestimonialText('');
-                      alert('Testimony shared! 🙌');
                     }
                   }}
                   className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 px-6 py-3 rounded-lg font-semibold transition-all"
@@ -1139,48 +1762,188 @@ export default function GreenwichSDARetreatApp() {
                   Share Testimony
                 </button>
                 <div className="text-sm text-slate-400">
-                  {userName ? `Posting as: ${userName}` : 'Set your name in profile'}
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${currentUser.bg}`}>
+                      <span className="text-xs">{currentUser.avatar}</span>
+                    </div>
+                    <span>Posting as: {currentUser.name}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Testimonial List */}
+            {/* Testimonial List with Community Interactions */}
             <div className="space-y-4">
               {testimonials.length > 0 ? (
                 testimonials.map((testimony) => (
                   <div key={testimony.id} className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700 hover:border-teal-500/50 transition-colors">
                     <div className="flex items-start gap-4">
-                      <Users className="w-6 h-6 text-teal-400 flex-shrink-0 mt-1" />
+                      <div className="flex-shrink-0">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${testimony.userColor.replace('text', 'bg')}`}>
+                          <span className="text-lg">{testimony.userAvatar}</span>
+                        </div>
+                      </div>
                       <div className="flex-1">
-                        <p className="text-slate-300 leading-relaxed mb-3 italic">"{testimony.text}"</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="text-teal-400 font-medium">{testimony.author}</span>
-                            <span className="text-slate-500">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="text-lg font-semibold text-teal-300">{testimony.userName}</h3>
+                            <p className="text-xs text-slate-400">
                               {new Date(testimony.timestamp).toLocaleDateString('en-GB', { 
                                 day: 'numeric', 
-                                month: 'long',
+                                month: 'short',
                                 hour: '2-digit',
                                 minute: '2-digit'
                               })}
-                            </span>
+                            </p>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => likeTestimonial(testimony.id)}
-                              className="flex items-center gap-1 text-teal-400 hover:text-teal-300"
-                            >
-                              <Heart className={`w-4 h-4 ${testimony.likes > 0 ? 'fill-teal-400' : ''}`} />
-                              <span>{testimony.likes}</span>
-                            </button>
-                            {userName === testimony.author && (
+                          
+                          {testimony.userId === currentUser.id && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => startEditing(testimony.id, 'testimonial', testimony.text)}
+                                className="text-slate-500 hover:text-teal-400"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
                               <button
                                 onClick={() => deleteTestimonial(testimony.id)}
-                                className="text-slate-500 hover:text-red-400 text-sm"
+                                className="text-slate-500 hover:text-red-400"
                               >
-                                Delete
+                                <Trash2 className="w-4 h-4" />
                               </button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {editingItem?.id === testimony.id && editingItem.type === 'testimonial' ? (
+                          <div className="mb-4">
+                            <textarea
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              className="w-full bg-slate-700/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                              rows="3"
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={saveEdit}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-500 py-1.5 rounded-lg text-sm"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingItem(null)}
+                                className="flex-1 bg-red-600/50 hover:bg-red-500/50 py-1.5 rounded-lg text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-slate-300 leading-relaxed mb-4 italic">"{testimony.text}"</p>
+                        )}
+                        
+                        {/* Interaction Buttons */}
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                          <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => likeTestimonial(testimony.id)}
+                              className="flex items-center gap-2 text-teal-400 hover:text-teal-300"
+                            >
+                              <ThumbsUp className={`w-5 h-5 ${testimony.likedBy?.includes(currentUser.id) ? 'fill-teal-400' : ''}`} />
+                              <span className="font-medium">{testimony.likes} encouragements</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                const commentText = commentText[testimony.id] || '';
+                                if (commentText.trim()) {
+                                  addTestimonialComment(testimony.id, commentText);
+                                  setCommentText({...commentText, [testimony.id]: ''});
+                                }
+                              }}
+                              className="flex items-center gap-2 text-slate-400 hover:text-white"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              <span>Comment</span>
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {testimony.likedBy?.slice(0, 3).map((userId, idx) => {
+                              const user = allUsers.find(u => u.id === userId);
+                              return user ? (
+                                <div
+                                  key={idx}
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center ${user.bg}`}
+                                  title={`Encouraged by ${user.name}`}
+                                >
+                                  <span className="text-xs">{user.avatar}</span>
+                                </div>
+                              ) : null;
+                            })}
+                            {testimony.likedBy && testimony.likedBy.length > 3 && (
+                              <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs">
+                                +{testimony.likedBy.length - 3}
+                              </div>
                             )}
+                          </div>
+                        </div>
+                        
+                        {/* Comments Section */}
+                        {testimony.comments.length > 0 && (
+                          <div className="mt-4 space-y-3">
+                            <p className="text-sm font-medium text-slate-400">Comments ({testimony.comments.length})</p>
+                            {testimony.comments.slice(0, 2).map((comment) => (
+                              <div key={comment.id} className="bg-slate-700/30 rounded-lg p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${comment.userColor.replace('text', 'bg')}`}>
+                                    <span className="text-xs">{comment.userAvatar}</span>
+                                  </div>
+                                  <span className="font-medium text-teal-200">{comment.userName}</span>
+                                  <span className="text-xs text-slate-500">
+                                    {new Date(comment.timestamp).toLocaleTimeString('en-GB', {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="text-slate-300 text-sm">{comment.text}</p>
+                              </div>
+                            ))}
+                            
+                            {testimony.comments.length > 2 && (
+                              <p className="text-xs text-slate-500 text-center">
+                                +{testimony.comments.length - 2} more comments
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Add Comment */}
+                        <div className="mt-4 flex gap-2">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentUser.bg}`}>
+                            <span className="text-sm">{currentUser.avatar}</span>
+                          </div>
+                          <div className="flex-1 flex gap-2">
+                            <input
+                              type="text"
+                              value={commentText[testimony.id] || ''}
+                              onChange={(e) => setCommentText({...commentText, [testimony.id]: e.target.value})}
+                              placeholder="Add a comment of encouragement..."
+                              className="flex-1 bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                            />
+                            <button
+                              onClick={() => {
+                                const text = commentText[testimony.id] || '';
+                                if (text.trim()) {
+                                  addTestimonialComment(testimony.id, text);
+                                  setCommentText({...commentText, [testimony.id]: ''});
+                                }
+                              }}
+                              className="bg-teal-600 hover:bg-teal-500 px-4 rounded-lg text-sm"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1190,14 +1953,15 @@ export default function GreenwichSDARetreatApp() {
               ) : (
                 <div className="bg-slate-800/70 backdrop-blur rounded-xl p-12 border border-slate-700 text-center">
                   <MessageCircle className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-                  <p className="text-slate-400">No testimonials yet. Share how God is working!</p>
+                  <p className="text-slate-400">No testimonies yet. Share how God is working!</p>
+                  <p className="text-sm text-slate-500 mt-2">Your story could inspire someone else's faith journey.</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Attractions Tab */}
+        {/* Attractions Tab (unchanged) */}
         {activeTab === 'attractions' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-6 shadow-xl">
@@ -1254,11 +2018,25 @@ export default function GreenwichSDARetreatApp() {
       {/* Footer */}
       <div className="bg-slate-900 border-t border-slate-800 mt-12 py-8">
         <div className="max-w-7xl mx-auto px-4 text-center text-slate-400">
-          <p className="mb-2">Greenwich SDA Men's Ministry</p>
+          <p className="mb-2">Greenwich SDA Men's Ministry Retreat Community</p>
           <p className="text-sm">Bury Jubilee Outdoor Pursuits Centre, Glenridding, Cumbria CA11 0QR</p>
           <p className="text-sm mt-4 italic">"Be strong and courageous. Do not be afraid." - Joshua 1:9</p>
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span>{allUsers.length} Members</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4" />
+              <span>{prayerRequests.reduce((sum, p) => sum + p.prayers, 0)} Prayers</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Camera className="w-4 h-4" />
+              <span>{photos.length} Photos</span>
+            </div>
+          </div>
           <p className="text-xs text-slate-500 mt-4">
-            All data is stored locally in your browser. Clear browser data to reset.
+            All community data is stored locally in your browser. Share the app link with others to build the community!
           </p>
         </div>
       </div>
