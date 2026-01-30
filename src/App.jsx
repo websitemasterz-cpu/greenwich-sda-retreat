@@ -1,10 +1,10 @@
-// src/App.jsx - CORRECTED VERSION
+// src/App.jsx - CORRECTED VERSION (No duplicate emergencyContacts)
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, 
   Upload, Navigation, Clock, Sun, Cloud, CloudRain, Thermometer, Droplets, Wind, 
-  CloudSnow, CloudLightning, Bell, X, Send, AlertCircle, Battery, Wifi, 
-  CheckCircle, Star, Trophy, RefreshCw, WifiOff, Zap, Gift, Download, Share,
+  CloudSnow, CloudLightning, Bell, X, AlertCircle, Battery, Wifi, 
+  CheckCircle, Trophy, RefreshCw, WifiOff, Zap, Gift, Download, Share,
   Sunrise, Sunset, Moon
 } from 'lucide-react';
 
@@ -36,7 +36,6 @@ export default function GreenwichSDARetreatApp() {
   const [batteryLevel, setBatteryLevel] = useState(85);
   const [streakDays, setStreakDays] = useState(3);
   const [achievements, setAchievements] = useState([]);
-  const [emergencyContacts, setEmergencyContacts] = useState([]);
   const [hikeProgress, setHikeProgress] = useState(45);
   const [connectionStatus, setConnectionStatus] = useState('online');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -188,8 +187,8 @@ export default function GreenwichSDARetreatApp() {
     }
   ];
 
-  // Emergency contacts
-  const emergencyContacts = [
+  // Emergency contacts - FIXED: Removed duplicate declaration
+  const emergencyContactsData = [
     { id: 1, name: 'Retreat Leader', phone: '+44 7911 123456', role: 'Emergency Contact' },
     { id: 2, name: 'Mountain Rescue', phone: '999', role: 'Emergency Services' },
     { id: 3, name: 'Local Hospital', phone: '+44 17684 82288', role: 'Westmorland Hospital' }
@@ -270,9 +269,6 @@ export default function GreenwichSDARetreatApp() {
     
     // Set achievements
     setAchievements(defaultAchievements);
-    
-    // Set emergency contacts
-    setEmergencyContacts(emergencyContacts);
 
     // Battery monitoring
     if ('getBattery' in navigator) {
@@ -621,7 +617,7 @@ export default function GreenwichSDARetreatApp() {
       </div>
       
       <div className="space-y-3">
-        {emergencyContacts.map(contact => (
+        {emergencyContactsData.map(contact => (
           <a
             key={contact.id}
             href={contact.phone ? `tel:${contact.phone}` : '#'}
