@@ -1,15 +1,34 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, Upload, Navigation, Clock, Sun, Cloud } from 'lucide-react';
+import { Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, Upload, Navigation, Clock, Sun, Cloud, CloudRain, Thermometer, Droplets, Wind, CloudSnow, CloudLightning } from 'lucide-react';
 
 export default function GreenwichSDARetreatApp() {
   const [activeTab, setActiveTab] = useState('schedule');
   const [currentLocation, setCurrentLocation] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [prayerRequests, setPrayerRequests] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [comments, setComments] = useState({});
+
+  // Mock weather data (in real app, you'd fetch from weather API)
+  const mockWeatherData = {
+    temperature: 18,
+    condition: 'Partly Cloudy',
+    feelsLike: 16,
+    humidity: 65,
+    windSpeed: 12,
+    precipitation: 20,
+    icon: '⛅',
+    forecast: [
+      { day: 'Today', high: 18, low: 12, condition: 'Partly Cloudy', icon: '⛅' },
+      { day: 'Sat', high: 16, low: 11, condition: 'Light Rain', icon: '🌦️' },
+      { day: 'Sun', high: 14, low: 9, condition: 'Cloudy', icon: '☁️' },
+      { day: 'Mon', high: 17, low: 12, condition: 'Sunny', icon: '☀️' }
+    ]
+  };
 
   // Base location - Bury Jubilee Outdoor Pursuits Centre
   const baseLocation = {
@@ -155,6 +174,9 @@ export default function GreenwichSDARetreatApp() {
       );
     }
 
+    // Set mock weather data (in real app, fetch from API)
+    setWeather(mockWeatherData);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -214,11 +236,18 @@ export default function GreenwichSDARetreatApp() {
     }]);
   };
 
+  // Get weather icon based on condition
+  const getWeatherIcon = (condition) => {
+    if (condition.includes('Sunny') || condition.includes('Clear')) return <Sun className="w-5 h-5 text-amber-400" />;
+    if (condition.includes('Cloud')) return <Cloud className="w-5 h-5 text-slate-300" />;
+    if (condition.includes('Rain')) return <CloudRain className="w-5 h-5 text-blue-400" />;
+    if (condition.includes('Snow')) return <CloudSnow className="w-5 h-5 text-blue-200" />;
+    if (condition.includes('Storm')) return <CloudLightning className="w-5 h-5 text-purple-400" />;
+    return <Cloud className="w-5 h-5 text-slate-300" />;
+  };
+
   const currentSchedule = getDaySchedule();
   const currentHour = currentTime.getHours() + (currentTime.getMinutes() / 60);
-
-  // Google Maps API Key - Get yours from https://console.cloud.google.com/
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white">
@@ -232,15 +261,58 @@ export default function GreenwichSDARetreatApp() {
             </div>
             <Mountain className="w-12 h-12 text-emerald-200" />
           </div>
-          <div className="mt-4 flex items-center gap-4 text-sm">
+          <div className="mt-4 flex items-center gap-4 text-sm flex-wrap">
             <div className="flex items-center gap-2 bg-emerald-900/40 px-3 py-1.5 rounded-full">
               <MapPin className="w-4 h-4" />
               <span>Bury Jubilee Centre, Glenridding</span>
             </div>
+            
+            {/* Current Time */}
             <div className="flex items-center gap-2 bg-emerald-900/40 px-3 py-1.5 rounded-full">
               <Clock className="w-4 h-4" />
               <span>{currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
+            
+            {/* Weather Display */}
+            {weather && (
+              <div className="flex items-center gap-2 bg-gradient-to-r from-sky-800/60 to-cyan-800/60 px-3 py-1.5 rounded-full border border-sky-700/50 shadow-lg">
+                <div className="flex items-center gap-2">
+                  {getWeatherIcon(weather.condition)}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-white">{weather.temperature}°</span>
+                    <span className="text-xs text-sky-200">C</span>
+                  </div>
+                  <div className="h-4 w-px bg-sky-600/50"></div>
+                  <div className="flex items-center gap-1">
+                    <Thermometer className="w-3 h-3 text-amber-300" />
+                    <span className="text-xs text-slate-200">Feels {weather.feelsLike}°</span>
+                  </div>
+                  <div className="h-4 w-px bg-sky-600/50"></div>
+                  <div className="flex items-center gap-1">
+                    <Droplets className="w-3 h-3 text-blue-300" />
+                    <span className="text-xs text-slate-200">{weather.humidity}%</span>
+                  </div>
+                  <div className="h-4 w-px bg-sky-600/50"></div>
+                  <div className="flex items-center gap-1">
+                    <Wind className="w-3 h-3 text-teal-300" />
+                    <span className="text-xs text-slate-200">{weather.windSpeed} km/h</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Quick Forecast */}
+            {weather && (
+              <div className="hidden md:flex items-center gap-1 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-700/50">
+                {weather.forecast.map((day, idx) => (
+                  <div key={idx} className="flex flex-col items-center px-2">
+                    <span className="text-xs text-slate-300">{day.day}</span>
+                    <span className="text-sm font-semibold text-white">{day.high}°</span>
+                    <span className="text-xs text-slate-400">{day.low}°</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -366,191 +438,192 @@ export default function GreenwichSDARetreatApp() {
           </div>
         )}
 
-        {/* Location Tab - WITH GOOGLE MAPS */}
+        {/* Location Tab */}
         {activeTab === 'location' && (
-  <div className="space-y-6">
-    <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
-      <h2 className="text-2xl font-bold mb-2">Location Tracking</h2>
-      <p className="text-blue-100">Real-time position and navigation</p>
-    </div>
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Location Tracking</h2>
+              <p className="text-blue-100">Real-time position and navigation</p>
+            </div>
 
-    {/* Simple Map Visualization */}
-    <div className="bg-slate-800/70 backdrop-blur rounded-xl border border-slate-700 overflow-hidden">
-      <div className="h-96 bg-gradient-to-br from-slate-900 to-blue-900/50 flex items-center justify-center relative">
-        {/* Location Dots */}
-        <div className="absolute inset-0">
-          {/* Base Camp */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="w-12 h-12 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
-              <span className="text-white text-lg">🏠</span>
-            </div>
-            <div className="mt-2 text-center">
-              <p className="text-white font-bold text-sm">Base Camp</p>
-              <p className="text-emerald-300 text-xs">Bury Jubilee Centre</p>
-            </div>
-          </div>
-          
-          {/* Helvellyn */}
-          <div className="absolute left-1/4 top-1/4">
-            <div className="w-10 h-10 bg-amber-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
-              <span className="text-white">⛰️</span>
-            </div>
-          </div>
-          
-          {/* Aira Force */}
-          <div className="absolute left-3/4 top-1/3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
-              <span className="text-white">💧</span>
-            </div>
-          </div>
-          
-          {/* Ullswater */}
-          <div className="absolute left-2/3 top-2/3">
-            <div className="w-10 h-10 bg-indigo-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
-              <span className="text-white">🛥️</span>
-            </div>
-          </div>
-          
-          {/* Current Location if available */}
-          {currentLocation && (
-            <div className="absolute" style={{ 
-              left: `${50 + (currentLocation.lng - (-2.9620)) * 100}%`,
-              top: `${50 - (currentLocation.lat - 54.5262) * 100}%`
-            }}>
-              <div className="w-8 h-8 bg-red-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center animate-bounce">
-                <span className="text-white text-xs">📍</span>
+            {/* Simple Map Visualization */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl border border-slate-700 overflow-hidden">
+              <div className="h-96 bg-gradient-to-br from-slate-900 to-blue-900/50 flex items-center justify-center relative">
+                {/* Location Dots */}
+                <div className="absolute inset-0">
+                  {/* Base Camp */}
+                  <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-12 h-12 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
+                      <span className="text-white text-lg">🏠</span>
+                    </div>
+                    <div className="mt-2 text-center">
+                      <p className="text-white font-bold text-sm">Base Camp</p>
+                      <p className="text-emerald-300 text-xs">Bury Jubilee Centre</p>
+                    </div>
+                  </div>
+                  
+                  {/* Helvellyn */}
+                  <div className="absolute left-1/4 top-1/4">
+                    <div className="w-10 h-10 bg-amber-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
+                      <span className="text-white">⛰️</span>
+                    </div>
+                  </div>
+                  
+                  {/* Aira Force */}
+                  <div className="absolute left-3/4 top-1/3">
+                    <div className="w-10 h-10 bg-blue-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
+                      <span className="text-white">💧</span>
+                    </div>
+                  </div>
+                  
+                  {/* Ullswater */}
+                  <div className="absolute left-2/3 top-2/3">
+                    <div className="w-10 h-10 bg-indigo-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
+                      <span className="text-white">🛥️</span>
+                    </div>
+                  </div>
+                  
+                  {/* Current Location if available */}
+                  {currentLocation && (
+                    <div className="absolute" style={{ 
+                      left: `${50 + (currentLocation.lng - (-2.9620)) * 100}%`,
+                      top: `${50 - (currentLocation.lat - 54.5262) * 100}%`
+                    }}>
+                      <div className="w-8 h-8 bg-red-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center animate-bounce">
+                        <span className="text-white text-xs">📍</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Connection Lines */}
+                <svg className="absolute inset-0 w-full h-full">
+                  <line x1="50%" y1="50%" x2="25%" y2="25%" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,5" />
+                  <line x1="50%" y1="50%" x2="75%" y2="33%" stroke="#0ea5e9" strokeWidth="2" strokeDasharray="5,5" />
+                  <line x1="50%" y1="50%" x2="67%" y2="67%" stroke="#8b5cf6" strokeWidth="2" strokeDasharray="5,5" />
+                </svg>
+                
+                {/* Legend */}
+                <div className="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur rounded-lg p-3 border border-slate-700">
+                  <p className="text-sm font-semibold mb-2">Legend</p>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                      <span>Base Camp</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                      <span>Helvellyn</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <span>Aira Force</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                      <span>Ullswater</span>
+                    </div>
+                    {currentLocation && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <span>Your Location</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-        </div>
-        
-        {/* Connection Lines */}
-        <svg className="absolute inset-0 w-full h-full">
-          <line x1="50%" y1="50%" x2="25%" y2="25%" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,5" />
-          <line x1="50%" y1="50%" x2="75%" y2="33%" stroke="#0ea5e9" strokeWidth="2" strokeDasharray="5,5" />
-          <line x1="50%" y1="50%" x2="67%" y2="67%" stroke="#8b5cf6" strokeWidth="2" strokeDasharray="5,5" />
-        </svg>
-        
-        {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur rounded-lg p-3 border border-slate-700">
-          <p className="text-sm font-semibold mb-2">Legend</p>
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-              <span>Base Camp</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-              <span>Helvellyn</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span>Aira Force</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
-              <span>Ullswater</span>
-            </div>
-            {currentLocation && (
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                <span>Your Location</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
 
-    {/* Current Location Info */}
-    <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <MapPin className="w-5 h-5 text-emerald-400" />
-        Your Current Position
-      </h3>
-      {currentLocation ? (
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-700/50 rounded-lg p-3">
-              <p className="text-xs text-slate-400 mb-1">Latitude</p>
-              <p className="text-slate-300 font-mono">{currentLocation.lat.toFixed(6)}°</p>
+            {/* Current Location Info */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-emerald-400" />
+                Your Current Position
+              </h3>
+              {currentLocation ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-700/50 rounded-lg p-3">
+                      <p className="text-xs text-slate-400 mb-1">Latitude</p>
+                      <p className="text-slate-300 font-mono">{currentLocation.lat.toFixed(6)}°</p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-3">
+                      <p className="text-xs text-slate-400 mb-1">Longitude</p>
+                      <p className="text-slate-300 font-mono">{currentLocation.lng.toFixed(6)}°</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-emerald-400">
+                    Distance to base: ~{calculateDistance(
+                      currentLocation.lat,
+                      currentLocation.lng,
+                      baseLocation.lat,
+                      baseLocation.lng
+                    )} km
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-slate-400 mb-2">Enable location services to track your position</p>
+                  <button 
+                    onClick={() => {
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (position) => {
+                            setCurrentLocation({
+                              lat: position.coords.latitude,
+                              lng: position.coords.longitude
+                            });
+                          },
+                          (error) => alert('Please enable location access in your browser settings')
+                        );
+                      }
+                    }}
+                    className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
+                  >
+                    Enable Location Tracking
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="bg-slate-700/50 rounded-lg p-3">
-              <p className="text-xs text-slate-400 mb-1">Longitude</p>
-              <p className="text-slate-300 font-mono">{currentLocation.lng.toFixed(6)}°</p>
-            </div>
-          </div>
-          <p className="text-sm text-emerald-400">
-            Distance to base: ~{calculateDistance(
-              currentLocation.lat,
-              currentLocation.lng,
-              baseLocation.lat,
-              baseLocation.lng
-            )} km
-          </p>
-        </div>
-      ) : (
-        <div className="text-center py-4">
-          <p className="text-slate-400 mb-2">Enable location services to track your position</p>
-          <button 
-            onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                    setCurrentLocation({
-                      lat: position.coords.latitude,
-                      lng: position.coords.longitude
-                    });
-                  },
-                  (error) => alert('Please enable location access in your browser settings')
-                );
-              }
-            }}
-            className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
-          >
-            Enable Location Tracking
-          </button>
-        </div>
-      )}
-    </div>
 
-    {/* Key Locations with Distances */}
-    <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-      <h3 className="text-lg font-semibold mb-4">Distance to Key Locations</h3>
-      <div className="space-y-3">
-        {Object.entries(locations).map(([key, loc]) => (
-          <div key={key} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${
-                key === 'base' ? 'bg-emerald-500' :
-                key === 'helvellyn' ? 'bg-amber-500' :
-                key === 'airaForce' ? 'bg-blue-500' :
-                key === 'ullswater' ? 'bg-indigo-500' :
-                'bg-purple-500'
-              }`} />
-              <div>
-                <p className="font-medium">{loc.name}</p>
-                <p className="text-xs text-slate-400">
-                  {loc.lat.toFixed(4)}°, {loc.lng.toFixed(4)}°
-                </p>
+            {/* Key Locations with Distances */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Distance to Key Locations</h3>
+              <div className="space-y-3">
+                {Object.entries(locations).map(([key, loc]) => (
+                  <div key={key} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${
+                        key === 'base' ? 'bg-emerald-500' :
+                        key === 'helvellyn' ? 'bg-amber-500' :
+                        key === 'airaForce' ? 'bg-blue-500' :
+                        key === 'ullswater' ? 'bg-indigo-500' :
+                        'bg-purple-500'
+                      }`} />
+                      <div>
+                        <p className="font-medium">{loc.name}</p>
+                        <p className="text-xs text-slate-400">
+                          {loc.lat.toFixed(4)}°, {loc.lng.toFixed(4)}°
+                        </p>
+                      </div>
+                    </div>
+                    {currentLocation ? (
+                      <div className="text-right">
+                        <span className="text-emerald-400 text-sm font-medium">
+                          {calculateDistance(currentLocation.lat, currentLocation.lng, loc.lat, loc.lng)} km
+                        </span>
+                        <p className="text-xs text-slate-500">straight line</p>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 text-sm">-- km</span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-            {currentLocation ? (
-              <div className="text-right">
-                <span className="text-emerald-400 text-sm font-medium">
-                  {calculateDistance(currentLocation.lat, currentLocation.lng, loc.lat, loc.lng)} km
-                </span>
-                <p className="text-xs text-slate-500">straight line</p>
-              </div>
-            ) : (
-              <span className="text-slate-500 text-sm">-- km</span>
-            )}
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
+        )}
+
         {/* Devotional Tab */}
         {activeTab === 'devotional' && (
           <div className="space-y-6">
