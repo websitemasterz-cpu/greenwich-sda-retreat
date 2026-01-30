@@ -188,7 +188,7 @@ export default function GreenwichSDARetreatApp() {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000)
     
-    if (navigator.geolocation) {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setCurrentLocation({
@@ -262,8 +262,24 @@ export default function GreenwichSDARetreatApp() {
     }])
   }
 
+  const updatePrayers = (id: number) => {
+    setPrayerRequests(prayerRequests.map(r =>
+      r.id === id ? { ...r, prayers: r.prayers + 1 } : r
+    ))
+  }
+
   const currentSchedule = getDaySchedule()
   const currentHour = currentTime.getHours() + (currentTime.getMinutes() / 60)
+
+  const tabs = [
+    { id: 'schedule', icon: Calendar, label: 'Schedule' },
+    { id: 'location', icon: Navigation, label: 'Location' },
+    { id: 'devotional', icon: Book, label: 'Devotional' },
+    { id: 'photos', icon: Camera, label: 'Photos' },
+    { id: 'prayer', icon: Heart, label: 'Prayer' },
+    { id: 'testimonials', icon: MessageCircle, label: 'Testimonials' },
+    { id: 'attractions', icon: Mountain, label: 'Attractions' }
+  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white">
@@ -294,15 +310,7 @@ export default function GreenwichSDARetreatApp() {
       <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex overflow-x-auto">
-            {[
-              { id: 'schedule', icon: Calendar, label: 'Schedule' },
-              { id: 'location', icon: Navigation, label: 'Location' },
-              { id: 'devotional', icon: Book, label: 'Devotional' },
-              { id: 'photos', icon: Camera, label: 'Photos' },
-              { id: 'prayer', icon: Heart, label: 'Prayer' },
-              { id: 'testimonials', icon: MessageCircle, label: 'Testimonials' },
-              { id: 'attractions', icon: Mountain, label: 'Attractions' }
-            ].map(tab => (
+            {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -334,9 +342,10 @@ export default function GreenwichSDARetreatApp() {
             <div className="space-y-4">
               {currentSchedule.schedule.map((item, idx) => {
                 const itemHour = parseInt(item.time.split(':')[0]) + (parseInt(item.time.split(':')[1]) / 60)
-                const isCurrent = currentHour >= itemHour && 
-                                 (idx === currentSchedule.schedule.length - 1 || 
-                                  currentHour < parseInt(currentSchedule.schedule[idx + 1].time.split(':')[0]))
+                const nextItemTime = idx < currentSchedule.schedule.length - 1 
+                  ? parseInt(currentSchedule.schedule[idx + 1].time.split(':')[0])
+                  : 24
+                const isCurrent = currentHour >= itemHour && currentHour < nextItemTime
                 
                 return (
                   <div
@@ -382,7 +391,6 @@ export default function GreenwichSDARetreatApp() {
               })}
             </div>
 
-            {/* Quick Day Selector */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4">View Other Days</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -394,9 +402,7 @@ export default function GreenwichSDARetreatApp() {
                 ].map(({ name, date }) => (
                   <button
                     key={name}
-                    onClick={() => {
-                      setCurrentTime(date)
-                    }}
+                    onClick={() => setCurrentTime(date)}
                     className={`transition-all rounded-lg py-3 px-4 font-medium ${
                       currentSchedule.day === name
                         ? 'bg-emerald-600'
@@ -419,34 +425,18 @@ export default function GreenwichSDARetreatApp() {
               <p className="text-blue-100">Real-time position and navigation</p>
             </div>
 
-            {/* Map Placeholder */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl border border-slate-700 overflow-hidden">
               <div className="h-96 bg-gradient-to-br from-teal-900/30 to-blue-900/30 flex items-center justify-center relative">
-                <div className="absolute inset-0 opacity-10">
-                  {[...Array(20)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute bg-emerald-400 rounded-full"
-                      style={{
-                        width: Math.random() * 4 + 2 + 'px',
-                        height: Math.random() * 4 + 2 + 'px',
-                        left: Math.random() * 100 + '%',
-                        top: Math.random() * 100 + '%'
-                      }}
-                    />
-                  ))}
-                </div>
                 <div className="text-center z-10">
                   <Navigation className="w-16 h-16 mx-auto mb-4 text-emerald-400 animate-pulse" />
                   <p className="text-lg font-semibold mb-2">Interactive Map</p>
                   <p className="text-slate-400 max-w-md px-4">
-                    Map functionality would integrate with a mapping service like Google Maps or Mapbox to show your current location relative to retreat activities
+                    Map functionality would integrate with a mapping service like Google Maps or Mapbox
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Current Location */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-emerald-400" />
@@ -471,7 +461,6 @@ export default function GreenwichSDARetreatApp() {
               )}
             </div>
 
-            {/* Key Locations */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4">Key Locations</h3>
               <div className="space-y-3">
@@ -503,7 +492,6 @@ export default function GreenwichSDARetreatApp() {
               <p className="text-purple-100">Daily spiritual nourishment</p>
             </div>
 
-            {/* Today's Devotional */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-8 border border-slate-700">
               <div className="flex items-center gap-3 mb-6">
                 <Book className="w-8 h-8 text-purple-400" />
@@ -524,7 +512,6 @@ export default function GreenwichSDARetreatApp() {
               </div>
             </div>
 
-            {/* Additional Inspirational Quotes */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4">More Inspiration</h3>
               <div className="space-y-4">
@@ -552,7 +539,6 @@ export default function GreenwichSDARetreatApp() {
               <p className="text-pink-100">Capture and share memories</p>
             </div>
 
-            {/* Upload Section */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border-2 border-dashed border-slate-600 text-center">
               <label className="cursor-pointer block">
                 <input
@@ -567,7 +553,6 @@ export default function GreenwichSDARetreatApp() {
               </label>
             </div>
 
-            {/* Photo Grid */}
             {photos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {photos.map((photo) => (
@@ -583,20 +568,170 @@ export default function GreenwichSDARetreatApp() {
                           minute: '2-digit'
                         })}
                       </p>
-                      <div className="mt-3">
-                        <input
-                          type="text"
-                          placeholder="Add a caption..."
-                          className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-                        />
-                      </div>
-                      <button className="mt-3 flex items-center gap-2 text-pink-400 hover:text-pink-300 text-sm">
-                        <MessageCircle className="w-4 h-4" />
-                        <span>Add comment</span>
-                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-slate-800/70 backdrop-blur rounded-xl p-12 border border-
+              <div className="bg-slate-800/70 backdrop-blur rounded-xl p-12 border border-slate-700 text-center">
+                <Camera className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                <p className="text-slate-400">No photos uploaded yet. Start capturing memories!</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Prayer Tab */}
+        {activeTab === 'prayer' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Prayer Requests</h2>
+              <p className="text-amber-100">Lift each other up in prayer</p>
+            </div>
+
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Submit a Prayer Request</h3>
+              <textarea
+                id="prayer-textarea"
+                placeholder="Share what's on your heart..."
+                className="w-full bg-slate-700/50 rounded-lg px-4 py-3 min-h-32 focus:outline-none focus:ring-2 focus:ring-amber-400 mb-4"
+              />
+              <button
+                onClick={() => {
+                  const textarea
+                                    { quote: 'The mountains are calling and I must go.', author: 'John Muir' },
+                  { quote: 'In every walk with nature, one receives far more than he seeks.', author: 'John Muir' },
+                  { quote: 'Faith is taking the first step even when you don\'t see the whole staircase.', author: 'Martin Luther King Jr.' },
+                  { quote: 'Be strong and courageous. Do not be afraid; do not be discouraged.', author: 'Joshua 1:9' }
+                ].map((item, idx) => (
+                  <div key={idx} className="bg-slate-700/50 rounded-lg p-4 border-l-2 border-purple-400">
+                    <p className="italic text-slate-200">&quot;{item.quote}&quot;</p>
+                    <p className="text-sm text-purple-300 mt-2">— {item.author}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Photos Tab */}
+        {activeTab === 'photos' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Retreat Photos</h2>
+              <p className="text-pink-100">Capture and share memories</p>
+            </div>
+
+            <div className="bg-slate-800/70 rounded-xl p-6 border-2 border-dashed border-slate-600 text-center">
+              <label className="cursor-pointer block">
+                <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                <Upload className="w-12 h-12 mx-auto mb-4 text-pink-400" />
+                <p className="font-semibold">Upload Photo</p>
+              </label>
+            </div>
+
+            {photos.length === 0 ? (
+              <div className="bg-slate-800/70 rounded-xl p-10 border border-slate-700 text-center text-slate-400">
+                No photos yet
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-6">
+                {photos.map(photo => (
+                  <div key={photo.id} className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                    <img src={photo.src} className="w-full h-56 object-cover" />
+                    <div className="p-4 text-sm text-slate-400">
+                      {photo.timestamp.toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Prayer Tab */}
+        {activeTab === 'prayer' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Prayer Requests</h2>
+            </div>
+
+            <textarea
+              placeholder="Enter prayer request..."
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  addPrayerRequest((e.target as HTMLTextAreaElement).value)
+                  ;(e.target as HTMLTextAreaElement).value = ''
+                }
+              }}
+            />
+
+            <div className="space-y-3">
+              {prayerRequests.map(req => (
+                <div key={req.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                  <p>{req.text}</p>
+                  <button
+                    onClick={() => updatePrayers(req.id)}
+                    className="mt-2 text-emerald-400 text-sm"
+                  >
+                    🙏 Pray ({req.prayers})
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Testimonials Tab */}
+        {activeTab === 'testimonials' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold">Testimonials</h2>
+            </div>
+
+            <textarea
+              placeholder="Share a testimony..."
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  addTestimonial((e.target as HTMLTextAreaElement).value)
+                  ;(e.target as HTMLTextAreaElement).value = ''
+                }
+              }}
+            />
+
+            {testimonials.map(t => (
+              <div key={t.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <p>{t.text}</p>
+                <p className="text-sm text-slate-400 mt-2">{t.timestamp.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Attractions Tab */}
+        {activeTab === 'attractions' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold">Nearby Attractions</h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {attractions.map((a, i) => (
+                <div key={i} className="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                  <h3 className="text-lg font-semibold">{a.name}</h3>
+                  <p className="text-sm text-slate-400 mt-1">{a.description}</p>
+                  <div className="text-sm text-emerald-400 mt-2">
+                    {a.distance} • {a.duration} • {a.difficulty}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  )
+}
