@@ -276,7 +276,7 @@ const getLiveWeatherIcon = (weatherCode) => {
   if (weatherCode >= 200 && weatherCode < 300) return '⛈️';
   if (weatherCode >= 300 && weatherCode < 400) return '🌧️';
   if (weatherCode >= 500 && weatherCode < 600) return '🌧️';
-  if (weatherCode >= 600 && code < 700) return '❄️';
+  if (weatherCode >= 600 && weatherCode < 700) return '❄️';
   if (weatherCode === 800) return '☀️';
   if (weatherCode > 800) return '☁️';
   return '⛅';
@@ -627,101 +627,100 @@ const refreshWeather = () => {
     }
   };
 
-  // Enhanced Weather Component
-  const EnhancedWeather = () => (
-    <div className="mt-6 bg-gradient-to-r from-sky-800/40 to-cyan-800/40 backdrop-blur rounded-2xl p-5 border border-sky-700/30">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          {weatherLoading ? (
-            <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            getWeatherIcon(liveWeather?.condition)
-          )}
-          {weatherLoading ? 'Loading Weather...' : 'Live Weather'}
-        </h3>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={refreshWeather}
-            className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1"
-            disabled={weatherLoading || isRefreshing}
-          >
-            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
+  // Enhanced Weather Component - FIXED VERSION
+const EnhancedWeather = () => (
+  <div className="mt-6 bg-gradient-to-r from-sky-800/40 to-cyan-800/40 backdrop-blur rounded-2xl p-5 border border-sky-700/30">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-lg font-semibold flex items-center gap-2">
+        {weatherLoading ? (
+          <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+        ) : (
+          getWeatherIcon(liveWeather?.condition)
+        )}
+        {weatherLoading ? 'Loading Weather...' : 'Live Weather'}
+      </h3>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={refreshWeather}
+          className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1"
+          disabled={weatherLoading || isRefreshing}
+        >
+          <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
-      
-      {liveWeather && (
-        <>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-sky-900/30 rounded-xl p-4 text-center">
-              <div className="text-4xl mb-2">{liveWeather.icon}</div>
-              <div className="text-3xl font-bold">{liveWeather.temperature}°</div>
-              <div className="text-sm text-slate-300 capitalize">{liveWeather.condition}</div>
-              <div className="text-xs text-sky-300 mt-1">{liveWeather.city}</div>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <Thermometer className="w-4 h-4" />
-                  <span>Feels like</span>
-                </div>
-                <span className="font-medium">{liveWeather.feelsLike}°</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <Droplets className="w-4 h-4" />
-                  <span>Humidity</span>
-                </div>
-                <span className="font-medium">{liveWeather.humidity}%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <Wind className="w-4 h-4" />
-                  <span>Wind</span>
-                </div>
-                <span className="font-medium">{liveWeather.windSpeed} km/h</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <Sunrise className="w-4 h-4" />
-                  <span>Sunrise</span>
-                </div>
-                <span className="font-medium">{liveWeather.sunrise}</span>
-              </div>
+    </div>
+    
+    {liveWeather && (
+      <>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-sky-900/30 rounded-xl p-4 text-center">
+            <div className="text-4xl mb-2">{liveWeather.icon}</div>
+            <div className="text-3xl font-bold">{liveWeather.temperature}°</div>
+            <div className="text-sm text-slate-300 capitalize">{liveWeather.condition}</div>
+            {/* MOVED THE "LIVE" BADGE HERE - INSIDE THE COMPONENT */}
+            <div className="text-xs text-sky-300 mt-1">
+              {liveWeather.city} 
+              {liveWeather.isLiveData && (
+                <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                  Live
+                </span>
+              )}
             </div>
           </div>
           
-          <div className="pt-4 border-t border-sky-700/30">
-            <h4 className="text-sm font-semibold mb-3 text-slate-300">4-Day Forecast</h4>
-            <div className="flex overflow-x-auto gap-4 pb-2">
-              {liveWeather.forecast.map((day, idx) => (
-                <div key={idx} className="flex-shrink-0 bg-slate-800/30 rounded-xl p-3 min-w-24 text-center">
-                  <div className="text-sm font-medium">{day.day}</div>
-                  <div className="text-2xl my-2">{day.icon}</div>
-                  <div className="text-sm">
-                    <div className="font-bold">{day.high}°</div>
-                    <div className="text-slate-400 text-xs">{day.low}°</div>
-                  </div>
-                  <div className="text-xs text-slate-400 mt-1 capitalize">{day.condition}</div>
-                </div>
-              ))}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Thermometer className="w-4 h-4" />
+                <span>Feels like</span>
+              </div>
+              <span className="font-medium">{liveWeather.feelsLike}°</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Droplets className="w-4 h-4" />
+                <span>Humidity</span>
+              </div>
+              <span className="font-medium">{liveWeather.humidity}%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Wind className="w-4 h-4" />
+                <span>Wind</span>
+              </div>
+              <span className="font-medium">{liveWeather.windSpeed} km/h</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Sunrise className="w-4 h-4" />
+                <span>Sunrise</span>
+              </div>
+              <span className="font-medium">{liveWeather.sunrise}</span>
             </div>
           </div>
-        </>
-      )}
-    </div>
-    <div className="text-sm text-slate-300 capitalize">{liveWeather.condition}</div>
-<div className="text-xs text-sky-300 mt-1">
-  {liveWeather.city} 
-  {liveWeather.isLiveData && (
-    <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
-      Live
-    </span>
-  )}
-</div>
-  );
+        </div>
+        
+        <div className="pt-4 border-t border-sky-700/30">
+          <h4 className="text-sm font-semibold mb-3 text-slate-300">4-Day Forecast</h4>
+          <div className="flex overflow-x-auto gap-4 pb-2">
+            {liveWeather.forecast.map((day, idx) => (
+              <div key={idx} className="flex-shrink-0 bg-slate-800/30 rounded-xl p-3 min-w-24 text-center">
+                <div className="text-sm font-medium">{day.day}</div>
+                <div className="text-2xl my-2">{day.icon}</div>
+                <div className="text-sm">
+                  <div className="font-bold">{day.high}°</div>
+                  <div className="text-slate-400 text-xs">{day.low}°</div>
+                </div>
+                <div className="text-xs text-slate-400 mt-1 capitalize">{day.condition}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+);
 
   // Emergency Features Component
   const EmergencyFeatures = () => (
