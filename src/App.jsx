@@ -203,158 +203,127 @@ export default function GreenwichSDARetreatApp() {
   ];
 
   // ======================
-// REAL WEATHER FUNCTIONS
-// ======================
+  // REAL WEATHER FUNCTIONS
+  // ======================
 
-const fetchLiveWeather = async () => {
-  const apiKey = process.env.OPENWEATHER_API_KEY;
-  
-  if (!apiKey) {
-    console.error('API key missing - check Vercel environment variables');
-    setLiveWeather(getMockWeatherData());
-    return;
-  }
-  
-  // Always use current location if available
-  const targetLat = currentLocation?.lat || baseLocation.lat;
-  const targetLng = currentLocation?.lng || baseLocation.lng;
-  
-  setWeatherLoading(true);
-  
-  try {
-    // Your existing API call code...
-    const response = await fetch(`https://api...`);
+  const fetchLiveWeather = async () => {
+    const apiKey = process.env.OPENWEATHER_API_KEY;
     
-    if (response.status === 401) {
-      console.error('❌ Invalid API key - check your OpenWeather API key');
-      throw new Error('Invalid API key');
+    if (!apiKey) {
+      console.error('API key missing - check Vercel environment variables');
+      setLiveWeather(getMockWeatherData());
+      return;
     }
     
-    // Process and set live weather...
+    // Always use current location if available
+    const targetLat = currentLocation?.lat || baseLocation.lat;
+    const targetLng = currentLocation?.lng || baseLocation.lng;
     
-  } catch (error) {
-    console.error('Weather fetch failed:', error.message);
-    // Fallback to base camp weather, not mock
-    const fallbackWeather = await fetchWeatherForCoordinates(
-      baseLocation.lat, 
-      baseLocation.lng
-    );
-    setLiveWeather(fallbackWeather);
-    addNotification('Using retreat location weather');
-  } finally {
-    setWeatherLoading(false);
-  }
-};
+    setWeatherLoading(true);
+    setIsRefreshing(true);
 
-  // Use current location, or fallback to retreat base camp
-  const targetLat = currentLocation ? currentLocation.lat : baseLocation.lat;
-  const targetLng = currentLocation ? currentLocation.lng : baseLocation.lng;
+    try {
+      // Fetch CURRENT weather
+      const currentResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${targetLat}&lon=${targetLng}&units=metric&appid=${apiKey}`
+      );
+      
+      if (!currentResponse.ok) throw new Error(`Weather API error: ${currentResponse.status}`);
+      
+      const currentData = await currentResponse.json();
+      
+      // Fetch 5-DAY FORECAST in parallel for better performance
+      const forecastResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${targetLat}&lon=${targetLng}&units=metric&appid=${apiKey}`
+      );
+      const forecastData = await forecastResponse.json();
 
-  setWeatherLoading(true);
-  setIsRefreshing(true);
-
-  try {
-    // Fetch CURRENT weather
-    const currentResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${targetLat}&lon=${targetLng}&units=metric&appid=${apiKey}`
-    );
-    
-    if (!currentResponse.ok) throw new Error(`Weather API error: ${currentResponse.status}`);
-    
-    const currentData = await currentResponse.json();
-    
-    // Fetch 5-DAY FORECAST in parallel for better performance
-    const forecastResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?lat=${targetLat}&lon=${targetLng}&units=metric&appid=${apiKey}`
-    );
-    const forecastData = await forecastResponse.json();
-
-    // Process the combined data
-    const processedWeather = {
-      temperature: Math.round(currentData.main.temp),
-      feelsLike: Math.round(currentData.main.feels_like),
-      condition: currentData.weather[0].description,
-      humidity: currentData.main.humidity,
-      windSpeed: Math.round(currentData.wind.speed * 3.6), // Convert m/s to km/h
-      pressure: currentData.main.pressure,
-      sunrise: new Date(currentData.sys.sunrise * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      sunset: new Date(currentData.sys.sunset * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      icon: getLiveWeatherIcon(currentData.weather[0].id),
-      city: currentData.name,
-      lastUpdated: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      forecast: processForecastData(forecastData),
-      isLiveData: true // Flag to show this is real data
-    };
-    
-    setLiveWeather(processedWeather);
-    addNotification('Live weather updated! 🌤️');
-    
-  } catch (error) {
-    console.error('Error fetching live weather:', error);
-    addNotification('Using sample weather data');
-    // Fallback to mock data on any error
-    setLiveWeather(getMockWeatherData());
-  } finally {
-    setWeatherLoading(false);
-    setIsRefreshing(false);
-  }
-};
-
-// Helper: Map OpenWeather icon codes to emojis
-const getLiveWeatherIcon = (weatherCode) => {
-  if (weatherCode >= 200 && weatherCode < 300) return '⛈️';
-  if (weatherCode >= 300 && weatherCode < 400) return '🌧️';
-  if (weatherCode >= 500 && weatherCode < 600) return '🌧️';
-  if (weatherCode >= 600 && weatherCode < 700) return '❄️';
-  if (weatherCode === 800) return '☀️';
-  if (weatherCode > 800) return '☁️';
-  return '⛅';
-};
-
-// Helper: Process 5-day forecast data from API
-const processForecastData = (forecastData) => {
-  const dailyForecasts = {};
-  
-  forecastData.list.forEach(item => {
-    const date = new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' });
-    if (!dailyForecasts[date]) {
-      dailyForecasts[date] = {
-        day: date,
-        high: Math.round(item.main.temp_max),
-        low: Math.round(item.main.temp_min),
-        icon: getLiveWeatherIcon(item.weather[0].id),
-        condition: item.weather[0].description
+      // Process the combined data
+      const processedWeather = {
+        temperature: Math.round(currentData.main.temp),
+        feelsLike: Math.round(currentData.main.feels_like),
+        condition: currentData.weather[0].description,
+        humidity: currentData.main.humidity,
+        windSpeed: Math.round(currentData.wind.speed * 3.6), // Convert m/s to km/h
+        pressure: currentData.main.pressure,
+        sunrise: new Date(currentData.sys.sunrise * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        sunset: new Date(currentData.sys.sunset * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        icon: getLiveWeatherIcon(currentData.weather[0].id),
+        city: currentData.name,
+        lastUpdated: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        forecast: processForecastData(forecastData),
+        isLiveData: true // Flag to show this is real data
       };
-    } else {
-      dailyForecasts[date].high = Math.max(dailyForecasts[date].high, Math.round(item.main.temp_max));
-      dailyForecasts[date].low = Math.min(dailyForecasts[date].low, Math.round(item.main.temp_min));
+      
+      setLiveWeather(processedWeather);
+      addNotification('Live weather updated! 🌤️');
+      
+    } catch (error) {
+      console.error('Error fetching live weather:', error);
+      addNotification('Using sample weather data');
+      // Fallback to mock data on any error
+      setLiveWeather(getMockWeatherData());
+    } finally {
+      setWeatherLoading(false);
+      setIsRefreshing(false);
     }
-  });
-  
-  return Object.values(dailyForecasts).slice(0, 4);
-};
+  };
 
-// Keep mock data as a fallback
-const getMockWeatherData = () => ({
-  temperature: 18,
-  feelsLike: 16,
-  condition: 'Partly Cloudy',
-  humidity: 65,
-  windSpeed: 12,
-  pressure: 1013,
-  sunrise: '06:45',
-  sunset: '20:15',
-  icon: '⛅',
-  forecast: [
-    { day: 'Today', high: 18, low: 12, icon: '⛅', condition: 'Partly Cloudy' },
-    { day: 'Sat', high: 16, low: 11, icon: '🌧️', condition: 'Light Rain' },
-    { day: 'Sun', high: 14, low: 9, icon: '☁️', condition: 'Cloudy' },
-    { day: 'Mon', high: 17, low: 12, icon: '☀️', condition: 'Sunny' }
-  ],
-  lastUpdated: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-  city: 'Lake District',
-  isLiveData: false // Flag to show this is mock data
-});
+  // Helper: Map OpenWeather icon codes to emojis
+  const getLiveWeatherIcon = (weatherCode) => {
+    if (weatherCode >= 200 && weatherCode < 300) return '⛈️';
+    if (weatherCode >= 300 && weatherCode < 400) return '🌧️';
+    if (weatherCode >= 500 && weatherCode < 600) return '🌧️';
+    if (weatherCode >= 600 && weatherCode < 700) return '❄️';
+    if (weatherCode === 800) return '☀️';
+    if (weatherCode > 800) return '☁️';
+    return '⛅';
+  };
+
+  // Helper: Process 5-day forecast data from API
+  const processForecastData = (forecastData) => {
+    const dailyForecasts = {};
+    
+    forecastData.list.forEach(item => {
+      const date = new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' });
+      if (!dailyForecasts[date]) {
+        dailyForecasts[date] = {
+          day: date,
+          high: Math.round(item.main.temp_max),
+          low: Math.round(item.main.temp_min),
+          icon: getLiveWeatherIcon(item.weather[0].id),
+          condition: item.weather[0].description
+        };
+      } else {
+        dailyForecasts[date].high = Math.max(dailyForecasts[date].high, Math.round(item.main.temp_max));
+        dailyForecasts[date].low = Math.min(dailyForecasts[date].low, Math.round(item.main.temp_min));
+      }
+    });
+    
+    return Object.values(dailyForecasts).slice(0, 4);
+  };
+
+  // Keep mock data as a fallback
+  const getMockWeatherData = () => ({
+    temperature: 18,
+    feelsLike: 16,
+    condition: 'Partly Cloudy',
+    humidity: 65,
+    windSpeed: 12,
+    pressure: 1013,
+    sunrise: '06:45',
+    sunset: '20:15',
+    icon: '⛅',
+    forecast: [
+      { day: 'Today', high: 18, low: 12, icon: '⛅', condition: 'Partly Cloudy' },
+      { day: 'Sat', high: 16, low: 11, icon: '🌧️', condition: 'Light Rain' },
+      { day: 'Sun', high: 14, low: 9, icon: '☁️', condition: 'Cloudy' },
+      { day: 'Mon', high: 17, low: 12, icon: '☀️', condition: 'Sunny' }
+    ],
+    lastUpdated: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+    city: 'Lake District',
+    isLiveData: false // Flag to show this is mock data
+  });
 
   // Save to localStorage whenever data changes
   useEffect(() => {
@@ -396,37 +365,19 @@ const getMockWeatherData = () => ({
         (error) => console.log('Location access denied')
       );
     }
-// Add this useEffect AFTER your existing initialization useEffect
-useEffect(() => {
-  const initializeWeather = async () => {
-    if (currentLocation) {
-      // User granted location - fetch their exact weather
-      await fetchLiveWeather();
-    } else {
-      // No user location - fetch weather for retreat base instead of mock
-      const baseWeather = await fetchWeatherForCoordinates(
-        baseLocation.lat, 
-        baseLocation.lng, 
-        'Lake District Retreat'
-      );
-      setLiveWeather(baseWeather);
-    }
-  };
-  
-  initializeWeather();
-}, [currentLocation]); // ✅ Runs when location changes
-    // Inside your main useEffect, replace the weather setup:
-// Find this line (or similar):
-// setLiveWeather(getMockWeatherData());
 
-// Replace with this smarter initialization:
-if (currentLocation) {
-  // We have location, fetch real weather
-  fetchLiveWeather();
-} else {
-  // No location yet, use mock data for initial display
-  setLiveWeather(getMockWeatherData());
-}
+    // Weather initialization
+    const initializeWeather = async () => {
+      if (currentLocation) {
+        // User granted location - fetch their exact weather
+        await fetchLiveWeather();
+      } else {
+        // No user location yet, use mock data for initial display
+        setLiveWeather(getMockWeatherData());
+      }
+    };
+    
+    initializeWeather();
     
     // Set achievements
     setAchievements(defaultAchievements);
@@ -452,6 +403,19 @@ if (currentLocation) {
       window.removeEventListener('offline', updateConnectionStatus);
     };
   }, []);
+
+  // Update weather when location changes
+  useEffect(() => {
+    const updateWeatherForLocation = async () => {
+      if (currentLocation) {
+        await fetchLiveWeather();
+      }
+    };
+    
+    if (currentLocation) {
+      updateWeatherForLocation();
+    }
+  }, [currentLocation]);
 
   const getDaySchedule = () => {
     if (currentDay === 'friday') return { day: 'Friday', schedule: schedule.friday, devotional: devotionals.friday };
@@ -647,10 +611,9 @@ if (currentLocation) {
     return <Cloud className="w-5 h-5 text-slate-300" />;
   };
 
- // Replace your current refreshWeather function with:
-const refreshWeather = () => {
-  fetchLiveWeather();
-};
+  const refreshWeather = () => {
+    fetchLiveWeather();
+  };
 
   // User stats calculation
   const userStats = {
@@ -675,99 +638,99 @@ const refreshWeather = () => {
   };
 
   // Enhanced Weather Component - FIXED VERSION
-const EnhancedWeather = () => (
-  <div className="mt-6 bg-gradient-to-r from-sky-800/40 to-cyan-800/40 backdrop-blur rounded-2xl p-5 border border-sky-700/30">
-    <div className="flex items-center justify-between mb-4">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
-        {weatherLoading ? (
-          <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
-        ) : (
-          getWeatherIcon(liveWeather?.condition)
-        )}
-        {weatherLoading ? 'Loading Weather...' : 'Live Weather'}
-      </h3>
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={refreshWeather}
-          className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1"
-          disabled={weatherLoading || isRefreshing}
-        >
-          <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+  const EnhancedWeather = () => (
+    <div className="mt-6 bg-gradient-to-r from-sky-800/40 to-cyan-800/40 backdrop-blur rounded-2xl p-5 border border-sky-700/30">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          {weatherLoading ? (
+            <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            getWeatherIcon(liveWeather?.condition)
+          )}
+          {weatherLoading ? 'Loading Weather...' : 'Live Weather'}
+        </h3>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={refreshWeather}
+            className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1"
+            disabled={weatherLoading || isRefreshing}
+          >
+            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
-    </div>
-    
-    {liveWeather && (
-      <>
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-sky-900/30 rounded-xl p-4 text-center">
-            <div className="text-4xl mb-2">{liveWeather.icon}</div>
-            <div className="text-3xl font-bold">{liveWeather.temperature}°</div>
-            <div className="text-sm text-slate-300 capitalize">{liveWeather.condition}</div>
-            {/* MOVED THE "LIVE" BADGE HERE - INSIDE THE COMPONENT */}
-            <div className="text-xs text-sky-300 mt-1">
-              {liveWeather.city} 
-              {liveWeather.isLiveData && (
-                <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
-                  Live
-                </span>
-              )}
+      
+      {liveWeather && (
+        <>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-sky-900/30 rounded-xl p-4 text-center">
+              <div className="text-4xl mb-2">{liveWeather.icon}</div>
+              <div className="text-3xl font-bold">{liveWeather.temperature}°</div>
+              <div className="text-sm text-slate-300 capitalize">{liveWeather.condition}</div>
+              {/* MOVED THE "LIVE" BADGE HERE - INSIDE THE COMPONENT */}
+              <div className="text-xs text-sky-300 mt-1">
+                {liveWeather.city} 
+                {liveWeather.isLiveData && (
+                  <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                    Live
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <Thermometer className="w-4 h-4" />
+                  <span>Feels like</span>
+                </div>
+                <span className="font-medium">{liveWeather.feelsLike}°</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <Droplets className="w-4 h-4" />
+                  <span>Humidity</span>
+                </div>
+                <span className="font-medium">{liveWeather.humidity}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <Wind className="w-4 h-4" />
+                  <span>Wind</span>
+                </div>
+                <span className="font-medium">{liveWeather.windSpeed} km/h</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <Sunrise className="w-4 h-4" />
+                  <span>Sunrise</span>
+                </div>
+                <span className="font-medium">{liveWeather.sunrise}</span>
+              </div>
             </div>
           </div>
           
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Thermometer className="w-4 h-4" />
-                <span>Feels like</span>
-              </div>
-              <span className="font-medium">{liveWeather.feelsLike}°</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Droplets className="w-4 h-4" />
-                <span>Humidity</span>
-              </div>
-              <span className="font-medium">{liveWeather.humidity}%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Wind className="w-4 h-4" />
-                <span>Wind</span>
-              </div>
-              <span className="font-medium">{liveWeather.windSpeed} km/h</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <Sunrise className="w-4 h-4" />
-                <span>Sunrise</span>
-              </div>
-              <span className="font-medium">{liveWeather.sunrise}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="pt-4 border-t border-sky-700/30">
-          <h4 className="text-sm font-semibold mb-3 text-slate-300">4-Day Forecast</h4>
-          <div className="flex overflow-x-auto gap-4 pb-2">
-            {liveWeather.forecast.map((day, idx) => (
-              <div key={idx} className="flex-shrink-0 bg-slate-800/30 rounded-xl p-3 min-w-24 text-center">
-                <div className="text-sm font-medium">{day.day}</div>
-                <div className="text-2xl my-2">{day.icon}</div>
-                <div className="text-sm">
-                  <div className="font-bold">{day.high}°</div>
-                  <div className="text-slate-400 text-xs">{day.low}°</div>
+          <div className="pt-4 border-t border-sky-700/30">
+            <h4 className="text-sm font-semibold mb-3 text-slate-300">4-Day Forecast</h4>
+            <div className="flex overflow-x-auto gap-4 pb-2">
+              {liveWeather.forecast.map((day, idx) => (
+                <div key={idx} className="flex-shrink-0 bg-slate-800/30 rounded-xl p-3 min-w-24 text-center">
+                  <div className="text-sm font-medium">{day.day}</div>
+                  <div className="text-2xl my-2">{day.icon}</div>
+                  <div className="text-sm">
+                    <div className="font-bold">{day.high}°</div>
+                    <div className="text-slate-400 text-xs">{day.low}°</div>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 capitalize">{day.condition}</div>
                 </div>
-                <div className="text-xs text-slate-400 mt-1 capitalize">{day.condition}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </>
-    )}
-  </div>
-);
+        </>
+      )}
+    </div>
+  );
 
   // Emergency Features Component
   const EmergencyFeatures = () => (
