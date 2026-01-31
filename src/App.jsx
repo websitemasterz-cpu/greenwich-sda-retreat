@@ -1754,10 +1754,14 @@ export default function GreenwichSDARetreatApp() {
                 className="flex items-center gap-2 hover:opacity-90 transition-opacity"
               >
                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">🌄</span>
+                  <img 
+      src="https://share.google/J672nHZ6qf0Z9kEzt" 
+      alt="Mountain Logo" 
+      className="w-8 h-8"
+    />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold tracking-tight">Greenwich SDA</h1>
+                  <h1 className="text-xl font-bold tracking-tight">Greenwich SDA Church</h1>
                   <p className="text-emerald-200 text-xs">Men's Retreat 2026</p>
                 </div>
               </a>
