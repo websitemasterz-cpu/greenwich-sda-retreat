@@ -1,4 +1,4 @@
-// src/App.jsx - COMPLETE FIXED VERSION
+// src/App.jsx - COMPLETE UPDATED VERSION
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, 
@@ -45,12 +45,6 @@ export default function GreenwichSDARetreatApp() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [checkedInAttractions, setCheckedInAttractions] = useState({});
-  const [komootFeatures, setKomootFeatures] = useState({
-    trails: [],
-    currentRoute: null,
-    elevationGain: 0,
-    distanceCovered: 0
-  });
 
   // NEW: Nearby Trails States
   const [nearbyTrails, setNearbyTrails] = useState([]);
@@ -102,13 +96,14 @@ export default function GreenwichSDARetreatApp() {
     return localStorage.getItem('retreatUserName') || '';
   });
 
-  // NEW: Current user with enhanced data
+  // UPDATED: Current user with profile picture support
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('retreatCurrentUser');
     return saved ? JSON.parse(saved) : {
       id: Date.now(),
       name: localStorage.getItem('retreatUserName') || 'You',
       avatar: '👤',
+      avatarUrl: '',
       points: 150,
       level: 1,
       rank: 'Explorer',
@@ -221,6 +216,85 @@ export default function GreenwichSDARetreatApp() {
       { time: '10:30', activity: 'Pack Up & Check Out', location: 'base', emoji: '🎒' },
       { time: '12:00', activity: 'Depart for London', location: 'London', emoji: '🚌' }
     ]
+  };
+
+  // NEW: Kitchen Duties and Menu Data
+  const kitchenData = {
+    friday: {
+      breakfast: {
+        menu: 'On the road',
+        team: ['Travel Day']
+      },
+      lunch: {
+        menu: 'On the road',
+        team: ['Travel Day']
+      },
+      dinner: {
+        menu: 'Welcome Dinner: Roast Chicken with Vegetables, Mashed Potatoes, Gravy',
+        team: ['Kitchen Staff', 'Volunteers']
+      }
+    },
+    saturday: {
+      breakfast: {
+        menu: 'Full English Breakfast: Eggs, Bacon, Sausages, Beans, Toast, Coffee/Tea',
+        team: ['Team A: John, Mike, David']
+      },
+      lunch: {
+        menu: 'Packed Lunch: Sandwiches, Crisps, Fruit, Chocolate Bar, Water',
+        team: ['Team A: John, Mike, David']
+      },
+      dinner: {
+        menu: 'Spaghetti Bolognese with Garlic Bread, Salad',
+        team: ['Team B: Peter, James, Andrew']
+      }
+    },
+    sunday: {
+      breakfast: {
+        menu: 'Continental Breakfast: Cereal, Pastries, Fruit, Yogurt, Coffee/Tea',
+        team: ['Team B: Peter, James, Andrew']
+      },
+      lunch: {
+        menu: 'Trail Snacks Provided',
+        team: ['Team B: Peter, James, Andrew']
+      },
+      dinner: {
+        menu: 'Sunday Roast: Beef, Yorkshire Puddings, Roast Potatoes, Vegetables',
+        team: ['Team C: Thomas, Matthew, Simon']
+      }
+    },
+    monday: {
+      breakfast: {
+        menu: 'Breakfast Buffet: Scrambled Eggs, Toast, Cereal, Fruit, Coffee/Tea',
+        team: ['Team C: Thomas, Matthew, Simon']
+      },
+      lunch: {
+        menu: 'Sandwiches and Soup (before departure)',
+        team: ['Team C: Thomas, Matthew, Simon']
+      },
+      dinner: {
+        menu: 'On the road',
+        team: ['Travel Day']
+      }
+    }
+  };
+
+  // Kitchen Teams Schedule
+  const kitchenTeams = {
+    saturday: {
+      breakfast: 'Team A: John, Mike, David',
+      lunch: 'Team A: John, Mike, David',
+      dinner: 'Team B: Peter, James, Andrew'
+    },
+    sunday: {
+      breakfast: 'Team B: Peter, James, Andrew',
+      lunch: 'Team B: Peter, James, Andrew',
+      dinner: 'Team C: Thomas, Matthew, Simon'
+    },
+    monday: {
+      breakfast: 'Team C: Thomas, Matthew, Simon',
+      lunch: 'Team C: Thomas, Matthew, Simon',
+      dinner: 'Travel Day'
+    }
   };
 
   // Daily devotionals
@@ -1786,8 +1860,6 @@ export default function GreenwichSDARetreatApp() {
     </div>
   );
 
-  // REMOVED System Status Component
-
   // Quick Actions Component
   const QuickActions = () => (
     <div className="mt-6 grid grid-cols-4 gap-3">
@@ -1903,41 +1975,6 @@ export default function GreenwichSDARetreatApp() {
     </div>
   );
 
-  // KOMOOT Features Component
-  const KomootFeatures = () => (
-    <div className="mt-6 bg-gradient-to-r from-green-800/40 to-emerald-800/40 rounded-2xl p-5 border border-emerald-700/30">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Compass className="w-5 h-5 text-emerald-400" />
-          Outdoor Features
-        </h3>
-        <span className="text-xs text-emerald-300">Komoot-inspired</span>
-      </div>
-      
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-800/50 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Activity className="w-5 h-5 text-emerald-400" />
-              <span className="font-medium">Miles Hiked</span>
-            </div>
-            <div className="text-2xl font-bold">{progressMetrics.totalMilesHiked.toFixed(1)}</div>
-            <div className="text-xs text-slate-400">Total distance</div>
-          </div>
-          
-          <div className="bg-slate-800/50 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-5 h-5 text-amber-400" />
-              <span className="font-medium">Elevation Gain</span>
-            </div>
-            <div className="text-2xl font-bold">0 ft</div>
-            <div className="text-xs text-slate-400">Total climb</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white">
       {/* Enhanced Header with Logo */}
@@ -1984,12 +2021,21 @@ export default function GreenwichSDARetreatApp() {
                 </div>
               )}
               
-              {/* User Profile Button */}
+              {/* User Profile Button with Profile Picture */}
               <button
                 onClick={() => setShowUserModal(true)}
-                className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center relative"
+                className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center overflow-hidden relative border-2 border-emerald-400"
               >
-                <span className="text-lg">{currentUser.avatar}</span>
+                {currentUser.avatarUrl ? (
+                  <img 
+                    src={currentUser.avatarUrl} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-lg">{currentUser.avatar}</span>
+                )}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900"></div>
               </button>
               
               {/* Notifications Button */}
@@ -2028,18 +2074,18 @@ export default function GreenwichSDARetreatApp() {
         </div>
       </div>
 
-      {/* Navigation Tabs - Mobile Optimized with NEW TRAILS TAB */}
+      {/* Navigation Tabs - UPDATED with Combined Locations and New Kitchen Tab */}
       <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-2 sm:px-4">
           <div className="flex overflow-x-auto pb-1 hide-scrollbar scroll-smooth snap-x snap-mandatory">
             {[
               { id: 'schedule', icon: Calendar, label: 'Schedule' },
-              { id: 'location', icon: Navigation, label: 'Location' },
+              { id: 'locations', icon: Navigation, label: 'Locations' },
+              { id: 'kitchen', icon: CoffeeIcon, label: 'Kitchen' },
               { id: 'devotional', icon: Book, label: 'Devotional' },
               { id: 'photos', icon: Camera, label: 'Photos' },
               { id: 'prayer', icon: Heart, label: 'Prayer' },
               { id: 'testimonials', icon: MessageCircle, label: 'Stories' },
-              { id: 'attractions', icon: Mountain, label: 'Attractions' },
               { id: 'trails', icon: TrailIcon, label: 'Trails' }
             ].map(tab => (
               <button
@@ -2089,7 +2135,7 @@ export default function GreenwichSDARetreatApp() {
               <p className="text-blue-100">21-24 August 2026</p>
             </div>
 
-            {/* Quick Day Selector - MOVED TO TOP */}
+            {/* Quick Day Selector */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4">View Other Days</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -2180,24 +2226,24 @@ export default function GreenwichSDARetreatApp() {
               </div>
             </div>
 
-            {/* ENHANCED FEATURES - REMOVED SystemStatus */}
+            {/* Enhanced Features */}
             <EnhancedWeather />
             <CheckInComponent />
-            <KomootFeatures />
             <EmergencyFeatures />
             <ProgressTracker />
             <QuickActions />
           </div>
         )}
 
-        {/* Location Tab */}
-        {activeTab === 'location' && (
+        {/* Combined Locations & Attractions Tab */}
+        {activeTab === 'locations' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Location & Navigation</h2>
-              <p className="text-blue-100">Find your way around the Lake District</p>
+              <h2 className="text-2xl font-bold mb-2">Locations & Attractions</h2>
+              <p className="text-blue-100">Explore the Lake District's beauty and key locations</p>
             </div>
 
+            {/* Base Location */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4">Base Location</h3>
               <div className="space-y-4">
@@ -2244,6 +2290,7 @@ export default function GreenwichSDARetreatApp() {
               </div>
             </div>
 
+            {/* Hiking Locations */}
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4">Key Hiking Locations</h3>
               <div className="space-y-4">
@@ -2276,8 +2323,258 @@ export default function GreenwichSDARetreatApp() {
               </div>
             </div>
 
+            {/* Attractions Section */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Local Attractions</h3>
+                <span className="text-sm text-slate-400">{attractions.length} attractions</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {attractions.map(attraction => (
+                  <div key={attraction.id} className="bg-slate-700/30 rounded-xl p-6 border border-slate-600 hover:border-indigo-500/50 transition-colors">
+                    <div className="flex items-start gap-4 mb-4">
+                      <span className="text-4xl">{attraction.icon}</span>
+                      <div className="flex-1">
+                        <h4 className="text-xl font-bold mb-2">{attraction.name}</h4>
+                        <div className="flex items-center gap-4 text-sm text-slate-400 mb-3">
+                          <span className="flex items-center gap-1">
+                            <Ruler className="w-3 h-3" />
+                            {attraction.distance}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <TimeIcon className="w-3 h-3" />
+                            {attraction.duration}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${
+                            attraction.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-300' :
+                            attraction.difficulty === 'Easy to Moderate' ? 'bg-green-500/20 text-green-300' :
+                            attraction.difficulty === 'Challenging' ? 'bg-orange-500/20 text-orange-300' :
+                            'bg-amber-500/20 text-amber-300'
+                          }`}>
+                            {attraction.difficulty}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-slate-300 mb-6">{attraction.description}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="text-lg font-bold text-emerald-400">+{attraction.points} pts</div>
+                      
+                      <button
+                        onClick={() => checkIntoAttraction(attraction.id)}
+                        disabled={checkedInAttractions[attraction.id]}
+                        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                          checkedInAttractions[attraction.id]
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'bg-indigo-600 hover:bg-indigo-700'
+                        }`}
+                      >
+                        {checkedInAttractions[attraction.id] ? 'Checked In ✓' : 'Check In'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Enhanced Features */}
+            <CheckInComponent />
             <EnhancedWeather />
             <EmergencyFeatures />
+          </div>
+        )}
+
+        {/* Kitchen Tab */}
+        {activeTab === 'kitchen' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-orange-600 to-amber-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Kitchen & Dining</h2>
+              <p className="text-orange-100">Meal schedules and kitchen duties</p>
+            </div>
+
+            {/* Day Selector */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Select Day</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { name: 'Friday', key: 'friday' },
+                  { name: 'Saturday', key: 'saturday' },
+                  { name: 'Sunday', key: 'sunday' },
+                  { name: 'Monday', key: 'monday' }
+                ].map(({ name, key }) => (
+                  <button
+                    key={key}
+                    onClick={() => setCurrentDay(key)}
+                    className={`transition-all rounded-lg py-3 px-4 font-medium ${
+                      currentDay === key
+                        ? 'bg-orange-600'
+                        : 'bg-slate-700/50 hover:bg-orange-600'
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Kitchen Duties */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <GroupIcon className="w-5 h-5 text-blue-400" />
+                  Kitchen Duty Schedule
+                </h3>
+                <span className="text-sm text-slate-400">Day: {currentDay.charAt(0).toUpperCase() + currentDay.slice(1)}</span>
+              </div>
+
+              <div className="space-y-6">
+                {/* Breakfast */}
+                <div className="bg-slate-700/30 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                      <Sun className="w-5 h-5 text-orange-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Breakfast</h4>
+                      <p className="text-sm text-slate-400">Morning meal</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-slate-400">Menu</div>
+                      <div className="text-slate-200 text-lg">{kitchenData[currentDay].breakfast.menu}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-slate-400">Kitchen Team</div>
+                      <div className="text-emerald-300 text-lg">
+                        {kitchenData[currentDay].breakfast.team.map((member, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>{member}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lunch */}
+                <div className="bg-slate-700/30 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                      <Sun className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Lunch</h4>
+                      <p className="text-sm text-slate-400">Midday meal</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-slate-400">Menu</div>
+                      <div className="text-slate-200 text-lg">{kitchenData[currentDay].lunch.menu}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-slate-400">Kitchen Team</div>
+                      <div className="text-emerald-300 text-lg">
+                        {kitchenData[currentDay].lunch.team.map((member, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>{member}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dinner */}
+                <div className="bg-slate-700/30 rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                      <Moon className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Dinner</h4>
+                      <p className="text-sm text-slate-400">Evening meal</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-slate-400">Menu</div>
+                      <div className="text-slate-200 text-lg">{kitchenData[currentDay].dinner.menu}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-slate-400">Kitchen Team</div>
+                      <div className="text-emerald-300 text-lg">
+                        {kitchenData[currentDay].dinner.team.map((member, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            <span>{member}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Schedule */}
+            <div className="bg-gradient-to-r from-amber-800/40 to-orange-800/40 rounded-2xl p-6 border border-amber-700/30">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-amber-400" />
+                Weekly Kitchen Teams
+              </h3>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-amber-700/30">
+                      <th className="text-left py-3 px-2">Day</th>
+                      <th className="text-left py-3 px-2">Breakfast</th>
+                      <th className="text-left py-3 px-2">Lunch</th>
+                      <th className="text-left py-3 px-2">Dinner</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(kitchenTeams).map(([day, teams]) => (
+                      <tr key={day} className="border-b border-slate-700/30">
+                        <td className="py-3 px-2 font-medium capitalize">{day}</td>
+                        <td className="py-3 px-2">
+                          <div className="text-sm bg-slate-800/50 rounded px-2 py-1">{teams.breakfast}</div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="text-sm bg-slate-800/50 rounded px-2 py-1">{teams.lunch}</div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="text-sm bg-slate-800/50 rounded px-2 py-1">{teams.dinner}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="mt-6 p-4 bg-amber-900/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <span className="font-medium">Kitchen Notes</span>
+                </div>
+                <ul className="text-sm text-slate-300 space-y-1">
+                  <li>• Teams should report 30 minutes before meal time</li>
+                  <li>• Clean as you go - maintain kitchen hygiene</li>
+                  <li>• Notify kitchen coordinator of any dietary requirements</li>
+                  <li>• All team members must wash hands before handling food</li>
+                </ul>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2603,69 +2900,6 @@ export default function GreenwichSDARetreatApp() {
           </div>
         )}
 
-        {/* Attractions Tab */}
-        {activeTab === 'attractions' && (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Local Attractions</h2>
-              <p className="text-indigo-100">Explore the Lake District's beauty</p>
-            </div>
-
-            {/* Attractions Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {attractions.map(attraction => (
-                <div key={attraction.id} className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700 hover:border-indigo-500/50 transition-colors">
-                  <div className="flex items-start gap-4 mb-4">
-                    <span className="text-4xl">{attraction.icon}</span>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2">{attraction.name}</h3>
-                      <div className="flex items-center gap-4 text-sm text-slate-400 mb-3">
-                        <span className="flex items-center gap-1">
-                          <Ruler className="w-3 h-3" />
-                          {attraction.distance}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <TimeIcon className="w-3 h-3" />
-                          {attraction.duration}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${
-                          attraction.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-300' :
-                          attraction.difficulty === 'Moderate' ? 'bg-amber-500/20 text-amber-300' :
-                          'bg-orange-500/20 text-orange-300'
-                        }`}>
-                          {attraction.difficulty}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-slate-300 mb-6">{attraction.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="text-lg font-bold text-emerald-400">+{attraction.points} pts</div>
-                    
-                    <button
-                      onClick={() => checkIntoAttraction(attraction.id)}
-                      disabled={checkedInAttractions[attraction.id]}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        checkedInAttractions[attraction.id]
-                          ? 'bg-emerald-500/20 text-emerald-300'
-                          : 'bg-indigo-600 hover:bg-indigo-700'
-                      }`}
-                    >
-                      {checkedInAttractions[attraction.id] ? 'Checked In ✓' : 'Check In'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <CheckInComponent />
-            <EnhancedWeather />
-            <EmergencyFeatures />
-          </div>
-        )}
-
         {/* NEW: Nearby Trails Tab */}
         {activeTab === 'trails' && <NearbyTrails />}
       </div>
@@ -2729,10 +2963,10 @@ export default function GreenwichSDARetreatApp() {
         </div>
       )}
 
-      {/* Enhanced User Modal */}
+      {/* Enhanced User Modal with Profile Picture Upload */}
       {showUserModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-emerald-700/50">
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-emerald-700/50 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">Your Profile</h2>
               <button onClick={() => setShowUserModal(false)}>
@@ -2740,14 +2974,48 @@ export default function GreenwichSDARetreatApp() {
               </button>
             </div>
             
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-2xl">
-                {currentUser.avatar}
+            {/* Profile Picture Upload Section */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center text-4xl mb-3 overflow-hidden border-2 border-emerald-500/30">
+                  {currentUser.avatarUrl ? (
+                    <img 
+                      src={currentUser.avatarUrl} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{currentUser.avatar}</span>
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 bg-emerald-600 rounded-full p-2 cursor-pointer hover:bg-emerald-700 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setCurrentUser(prev => ({
+                            ...prev,
+                            avatarUrl: reader.result,
+                            avatar: '👤'
+                          }));
+                          addNotification('Profile picture updated! 📸');
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <Camera className="w-4 h-4" />
+                </label>
               </div>
-              <div>
+              <div className="text-center">
                 <h3 className="text-xl font-bold">{currentUser.name}</h3>
                 <p className="text-slate-400">{currentUser.rank}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 justify-center">
                   <div className="flex items-center gap-1 text-xs">
                     <Zap className="w-3 h-3 text-amber-400" />
                     <span>{currentUser.points} points</span>
@@ -2759,56 +3027,102 @@ export default function GreenwichSDARetreatApp() {
               </div>
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm mb-2">Your Name</label>
-                <input
-                  type="text"
-                  value={currentUser.name}
-                  onChange={(e) => {
-                    setCurrentUser(prev => ({ ...prev, name: e.target.value }));
-                    setUserName(e.target.value);
-                  }}
-                  className="w-full bg-slate-700 rounded-lg px-4 py-3"
-                  placeholder="Enter your name"
-                />
+            {/* Name Input */}
+            <div className="mb-6">
+              <label className="block text-sm mb-2">Your Name</label>
+              <input
+                type="text"
+                value={currentUser.name}
+                onChange={(e) => {
+                  setCurrentUser(prev => ({ ...prev, name: e.target.value }));
+                  setUserName(e.target.value);
+                }}
+                className="w-full bg-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter your name"
+              />
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-slate-700/30 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-emerald-400">{progressMetrics.photosShared}</div>
+                <div className="text-sm text-slate-400">Photos</div>
               </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-emerald-400">{progressMetrics.photosShared}</div>
-                  <div className="text-sm">Photos</div>
-                </div>
-                <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-teal-400">{progressMetrics.prayerCount}</div>
-                  <div className="text-sm">Prayers</div>
-                </div>
-                <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-cyan-400">{hikedTrails.length}</div>
-                  <div className="text-sm">Trails</div>
-                </div>
+              <div className="bg-slate-700/30 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-teal-400">{progressMetrics.prayerCount}</div>
+                <div className="text-sm text-slate-400">Prayers</div>
               </div>
-              
-              <div className="pt-4 border-t border-slate-700">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">Daily Streak</span>
-                  <span className="text-emerald-400 font-bold">{streakDays} days</span>
-                </div>
-                <div className="flex gap-1">
-                  {[...Array(7)].map((_, i) => (
-                    <div 
-                      key={i}
-                      className={`flex-1 h-2 rounded-full ${i < streakDays ? 'bg-emerald-500' : 'bg-slate-700'}`}
-                    ></div>
-                  ))}
-                </div>
+              <div className="bg-slate-700/30 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-cyan-400">{hikedTrails.length}</div>
+                <div className="text-sm text-slate-400">Trails</div>
               </div>
-              
+            </div>
+            
+            {/* Streak Section */}
+            <div className="pt-4 border-t border-slate-700 mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Daily Streak</span>
+                <span className="text-emerald-400 font-bold">{streakDays} days</span>
+              </div>
+              <div className="flex gap-1">
+                {[...Array(7)].map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`flex-1 h-2 rounded-full ${i < streakDays ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                  ></div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Badges Section */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold mb-3">Badges Earned</h4>
+              <div className="flex flex-wrap gap-2">
+                {achievements.filter(a => a.earned).map(achievement => (
+                  <div 
+                    key={achievement.id}
+                    className="bg-emerald-900/30 rounded-lg p-2 flex items-center gap-2"
+                  >
+                    <span className="text-lg">{achievement.icon}</span>
+                    <div>
+                      <div className="text-sm font-medium">{achievement.name}</div>
+                      <div className="text-xs text-emerald-300">+{achievement.points} pts</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="space-y-3">
               <button
-                onClick={() => setShowUserModal(false)}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 py-3 rounded-lg font-semibold mt-4 hover:from-emerald-500 hover:to-teal-500 transition-all"
+                onClick={() => {
+                  setShowUserModal(false);
+                  addNotification('Profile saved! ✅');
+                }}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 py-3 rounded-lg font-semibold hover:from-emerald-500 hover:to-teal-500 transition-all"
               >
                 Save Changes
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentUser({
+                    id: Date.now(),
+                    name: 'You',
+                    avatar: '👤',
+                    avatarUrl: '',
+                    points: 150,
+                    level: 1,
+                    rank: 'Explorer',
+                    badges: ['Early Riser'],
+                    checkIns: 0,
+                    totalDistance: 0
+                  });
+                  addNotification('Profile reset to default');
+                }}
+                className="w-full bg-slate-700 py-3 rounded-lg font-semibold hover:bg-slate-600 transition-all"
+              >
+                Reset Profile
               </button>
             </div>
           </div>
