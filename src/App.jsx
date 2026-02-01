@@ -1,4 +1,4 @@
-// src/App.jsx - WITH ENHANCED TRAIL FINDER
+// src/App.jsx - WITH IMPROVED PROGRESS SECTION AND FIXED ISSUES
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, 
@@ -8,7 +8,8 @@ import {
   Sunrise, Sunset, Moon, ArrowUp, Compass, Target, Activity, TrendingUp,
   Star, Map, Shield, Phone, Coffee, Home, Music, Edit, ChevronUp,
   CheckSquare, Coffee as CoffeeIcon, Dumbbell, CalendarDays, Users as GroupIcon,
-  Filter, ExternalLink, MapPin as TrailIcon, ArrowRight, Ruler, Clock as TimeIcon
+  Filter, ExternalLink, MapPin as TrailIcon, ArrowRight, Ruler, Clock as TimeIcon,
+  TrendingUp as TrendingUpIcon, Award, Target as TargetIcon, Map as MapIcon
 } from 'lucide-react';
 
 export default function GreenwichSDARetreatApp() {
@@ -56,10 +57,29 @@ export default function GreenwichSDARetreatApp() {
   const [trailsLoading, setTrailsLoading] = useState(false);
   const [trailsError, setTrailsError] = useState(null);
   const [trailFilters, setTrailFilters] = useState({
-    maxDistance: 50, // km
+    maxDistance: 30, // miles
     minLength: 0,
-    maxLength: 50,
+    maxLength: 30,
     difficulty: 'all'
+  });
+
+  // NEW: Track trails that have been viewed/hiked
+  const [hikedTrails, setHikedTrails] = useState(() => {
+    const saved = localStorage.getItem('retreatHikedTrails');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // NEW: Track progress metrics
+  const [progressMetrics, setProgressMetrics] = useState(() => {
+    const saved = localStorage.getItem('retreatProgressMetrics');
+    return saved ? JSON.parse(saved) : {
+      totalMilesHiked: 0,
+      trailsCompleted: 0,
+      prayerCount: 0,
+      photosShared: 0,
+      checkIns: 0,
+      lastUpdated: new Date().toISOString()
+    };
   });
 
   // Load data from localStorage
@@ -102,7 +122,8 @@ export default function GreenwichSDARetreatApp() {
   const baseLocation = {
     lat: 54.5262,
     lng: -2.9620,
-    name: 'Bury Jubilee Outdoor Pursuits Centre'
+    name: 'Bury Jubilee Outdoor Pursuits Centre',
+    address: 'Glenridding, Penrith CA11 0QR, UK'
   };
 
   // Hiking locations with check-in capability
@@ -115,7 +136,8 @@ export default function GreenwichSDARetreatApp() {
       color: 'bg-emerald-500',
       description: 'Home base for the retreat',
       difficulty: 'Easy',
-      points: 10
+      points: 10,
+      distanceFromBase: 0
     },
     glenriddingDodd: { 
       lat: 54.5350, 
@@ -125,7 +147,8 @@ export default function GreenwichSDARetreatApp() {
       color: 'bg-green-500',
       description: 'Gentle fell walk with panoramic views',
       difficulty: 'Easy to Moderate',
-      points: 20
+      points: 20,
+      distanceFromBase: 1.5
     },
     airaForce: { 
       lat: 54.5733, 
@@ -135,7 +158,8 @@ export default function GreenwichSDARetreatApp() {
       color: 'bg-blue-500',
       description: 'Spectacular 65-foot cascade',
       difficulty: 'Easy',
-      points: 25
+      points: 25,
+      distanceFromBase: 3
     },
     helvellyn: { 
       lat: 54.5275, 
@@ -145,7 +169,8 @@ export default function GreenwichSDARetreatApp() {
       color: 'bg-amber-500',
       description: 'England\'s 3rd highest peak',
       difficulty: 'Challenging',
-      points: 50
+      points: 50,
+      distanceFromBase: 4
     },
     ullswater: { 
       lat: 54.5500, 
@@ -155,7 +180,8 @@ export default function GreenwichSDARetreatApp() {
       color: 'bg-indigo-500',
       description: 'Beautiful lake for steamer rides',
       difficulty: 'Easy',
-      points: 15
+      points: 15,
+      distanceFromBase: 2
     }
   };
 
@@ -203,25 +229,29 @@ export default function GreenwichSDARetreatApp() {
       title: 'Taking Charge: You Will Part the Waters',
       scripture: 'Exodus 14:13-16',
       quote: '"Do not be afraid. Stand firm and you will see the deliverance the Lord will bring you today." - Exodus 14:13',
-      reflection: 'God calls men to step forward in faith even when the path seems impossible. Leadership begins with trusting God\'s command over our circumstances.'
+      reflection: 'God calls men to step forward in faith even when the path seems impossible. Leadership begins with trusting God\'s command over our circumstances.',
+      content: 'Moses stood before the Israelites as they faced the Red Sea, with Pharaoh\'s army closing in from behind. In that moment of absolute despair, God gave Moses a command that defied all logic: "Tell the Israelites to move forward." This wasn\'t just about physical movement; it was about moving forward in faith when everything seemed impossible. As men, we often face "Red Sea moments" - situations where there seems to be no way forward. God\'s instruction remains the same: "Move forward." He doesn\'t show us the entire path, just the next step. Our leadership is tested not in calm waters but in stormy seas. When we step forward in faith, God makes a way where there seems to be no way.'
     },
     saturday: {
       title: 'Biblical Manhood: Living Under Christ\'s Lordship',
       scripture: '1 Corinthians 16:13-14',
       quote: '"Be on your guard; stand firm in the faith; be courageous; be strong. Do everything in love." - 1 Corinthians 16:13-14',
-      reflection: 'True strength is found in submission to Christ, not in worldly power. We are called to protect, provide, and lead with humility.'
+      reflection: 'True strength is found in submission to Christ, not in worldly power. We are called to protect, provide, and lead with humility.',
+      content: 'Biblical manhood is often misunderstood in our culture. Society tells us to be strong, independent, and in control. But Paul gives us a different picture: "Be on your guard; stand firm in the faith; be courageous; be strong. Do everything in love." Notice the progression: vigilance, faith, courage, strength - all culminating in love. Real strength isn\'t about dominating others; it\'s about being strong enough to be gentle, courageous enough to be vulnerable, and firm enough to be compassionate. As men of God, our strength comes from our submission to Christ. When we surrender to His lordship, we find true power - not to control others, but to serve them. Not to build our kingdoms, but to advance His.'
     },
     sunday: {
       title: 'Fear Not, Stand Firm',
       scripture: 'Joshua 1:9',
       quote: '"Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go." - Joshua 1:9',
-      reflection: 'Courage is not the absence of fear, but faith in action despite fear. God\'s presence gives us confidence to face any challenge.'
+      reflection: 'Courage is not the absence of fear, but faith in action despite fear. God\'s presence gives us confidence to face any challenge.',
+      content: 'God spoke these words to Joshua as he was about to lead Israel into the Promised Land - a land filled with giants, fortified cities, and experienced warriors. Joshua had every reason to be afraid. He was following in the footsteps of Moses, one of the greatest leaders in history. But God didn\'t say, "Don\'t feel afraid." He said, "Don\'t be afraid." There\'s a difference. Fear is an emotion; being afraid is a choice. God acknowledges that we will feel fear, but He commands us not to let that fear control us. Instead, He gives us three commands: be strong, be courageous, and remember His presence. Our courage comes not from our abilities, but from God\'s promise: "I will be with you."'
     },
     monday: {
       title: 'Going Forward: Living as Men of Faith',
       scripture: 'Philippians 3:13-14',
       quote: '"Forgetting what is behind and straining towards what is ahead, I press on towards the goal to win the prize for which God has called me." - Philippians 3:13-14',
-      reflection: 'Retreat experiences must translate into daily obedience. We are called to be doers of the Word, not just hearers.'
+      reflection: 'Retreat experiences must translate into daily obedience. We are called to be doers of the Word, not just hearers.',
+      content: 'As our retreat comes to an end, we face the challenge of translating mountaintop experiences into daily life. Paul gives us the key: "Forgetting what is behind and straining toward what is ahead." Notice he doesn\'t say "ignoring" what is behind, but "forgetting" - releasing its hold on us. We all have past failures, regrets, and missed opportunities. But we also have past successes that can make us complacent. Both can hinder our forward progress. The Christian life is one of constant forward motion. The Greek word for "press on" implies intense effort, like a runner straining toward the finish line. Our goal isn\'t perfection; it\'s Christlikeness. Our prize isn\'t earthly recognition; it\'s hearing "Well done, good and faithful servant."'
     }
   };
 
@@ -230,22 +260,24 @@ export default function GreenwichSDARetreatApp() {
     {
       id: 'airaForce',
       name: 'Aira Force Waterfall',
-      distance: '4.8 km',
+      distance: '3 miles',
       description: 'Spectacular 65-foot cascade through ancient woodland. National Trust site with well-maintained paths.',
       duration: '2-3 hours',
       difficulty: 'Easy to Moderate',
       points: 25,
-      icon: '💧'
+      icon: '💧',
+      trailLength: 2.5
     },
     {
       id: 'helvellyn',
       name: 'Helvellyn Summit',
-      distance: '6.5 km',
+      distance: '4 miles',
       description: 'England\'s 3rd highest peak (950m). Famous Striding Edge scramble route with breathtaking views.',
       duration: '6-7 hours',
       difficulty: 'Challenging',
       points: 50,
-      icon: '⛰️'
+      icon: '⛰️',
+      trailLength: 8
     },
     {
       id: 'ullswater',
@@ -255,17 +287,19 @@ export default function GreenwichSDARetreatApp() {
       duration: '1-2 hours',
       difficulty: 'Easy',
       points: 15,
-      icon: '🛥️'
+      icon: '🛥️',
+      trailLength: 1
     },
     {
       id: 'glenriddingDodd',
       name: 'Glenridding Dodd',
-      distance: '2.5 km',
+      distance: '1.5 miles',
       description: 'Gentle fell walk with panoramic views over Ullswater. Perfect acclimatisation hike.',
       duration: '2 hours',
       difficulty: 'Easy to Moderate',
       points: 20,
-      icon: '🥾'
+      icon: '🥾',
+      trailLength: 2
     }
   ];
 
@@ -278,12 +312,12 @@ export default function GreenwichSDARetreatApp() {
 
   // Achievements
   const defaultAchievements = [
-    { id: 1, name: 'Early Riser', description: 'Complete morning devotion', icon: '☀️', earned: true, progress: 100, points: 10 },
-    { id: 2, name: 'Prayer Warrior', description: 'Pray for others', icon: '🙏', earned: true, progress: 100, points: 15 },
-    { id: 3, name: 'Community Builder', description: 'Share photos or stories', icon: '📸', earned: false, progress: 66, points: 20 },
-    { id: 4, name: 'Summit Seeker', description: 'Complete hike', icon: '⛰️', earned: false, progress: 45, points: 25 },
-    { id: 5, name: 'Explorer', description: 'Check into 3 locations', icon: '📍', earned: false, progress: 33, points: 30 },
-    { id: 6, name: 'Trail Master', description: 'Discover 5 nearby trails', icon: '🥾', earned: false, progress: 0, points: 40 }
+    { id: 1, name: 'Early Riser', description: 'Complete morning devotion', icon: '☀️', earned: true, progress: 100, points: 10, type: 'spiritual' },
+    { id: 2, name: 'Prayer Warrior', description: 'Pray for 5 requests', icon: '🙏', earned: false, progress: 60, points: 15, type: 'spiritual' },
+    { id: 3, name: 'Community Builder', description: 'Share 3 photos', icon: '📸', earned: false, progress: 66, points: 20, type: 'social' },
+    { id: 4, name: 'Summit Seeker', description: 'Complete 3 hikes', icon: '⛰️', earned: false, progress: 45, points: 25, type: 'fitness' },
+    { id: 5, name: 'Explorer', description: 'Check into 3 locations', icon: '📍', earned: false, progress: 33, points: 30, type: 'exploration' },
+    { id: 6, name: 'Trail Master', description: 'Navigate 2 trails', icon: '🥾', earned: false, progress: 0, points: 40, type: 'fitness' }
   ];
 
   // Difficulty mapping
@@ -293,6 +327,16 @@ export default function GreenwichSDARetreatApp() {
     3: { label: 'Intermediate', color: 'bg-amber-500', text: 'text-amber-300' },
     4: { label: 'Hard', color: 'bg-orange-500', text: 'text-orange-300' },
     5: { label: 'Expert', color: 'bg-red-500', text: 'text-red-300' }
+  };
+
+  // Helper function to convert km to miles
+  const kmToMiles = (km) => {
+    return (km * 0.621371).toFixed(1);
+  };
+
+  // Helper function to convert miles to km
+  const milesToKm = (miles) => {
+    return (miles * 1.60934).toFixed(1);
   };
 
   // ======================
@@ -429,6 +473,62 @@ export default function GreenwichSDARetreatApp() {
   // NEARBY TRAILS FUNCTIONS
   // ======================
 
+  // Track when user views a trail on Google Maps
+  const trackTrailNavigation = (trail) => {
+    // Check if already tracked
+    if (!hikedTrails.some(t => t.id === trail.id)) {
+      const newHikedTrail = {
+        id: trail.id,
+        name: trail.name,
+        length: parseFloat(trail.length),
+        date: new Date().toISOString(),
+        points: 10
+      };
+      
+      setHikedTrails(prev => {
+        const updated = [newHikedTrail, ...prev];
+        localStorage.setItem('retreatHikedTrails', JSON.stringify(updated));
+        return updated;
+      });
+      
+      // Update progress metrics
+      setProgressMetrics(prev => {
+        const updated = {
+          ...prev,
+          totalMilesHiked: prev.totalMilesHiked + parseFloat(trail.length),
+          trailsCompleted: prev.trailsCompleted + 1,
+          lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem('retreatProgressMetrics', JSON.stringify(updated));
+        return updated;
+      });
+      
+      // Update achievements
+      setAchievements(prev => 
+        prev.map(a => {
+          if (a.id === 6 && progressMetrics.trailsCompleted + 1 >= 2) {
+            return { ...a, progress: 100, earned: true };
+          }
+          if (a.id === 4 && progressMetrics.trailsCompleted + 1 >= 3) {
+            return { ...a, progress: 100, earned: true };
+          }
+          return a;
+        })
+      );
+      
+      // Add points
+      setCurrentUser(prev => ({
+        ...prev,
+        points: prev.points + 10,
+        totalDistance: prev.totalDistance + parseFloat(trail.length)
+      }));
+      
+      addNotification(`Started navigation to ${trail.name}! +10 points`);
+    } else {
+      addNotification(`Already tracking ${trail.name}`);
+    }
+  };
+
   // Fetch nearby hiking trails using OpenTrails API (free)
   const fetchNearbyTrails = async () => {
     if (!currentLocation) {
@@ -444,7 +544,7 @@ export default function GreenwichSDARetreatApp() {
       const { lat, lng } = currentLocation;
       
       // Query for hiking routes, trails, and paths near current location
-      const radius = trailFilters.maxDistance * 1000; // Convert km to meters
+      const radius = trailFilters.maxDistance * 1609.34; // Convert miles to meters
       
       const query = `
         [out:json];
@@ -485,13 +585,6 @@ export default function GreenwichSDARetreatApp() {
         setTrailsError('No trails found in this area. Try increasing search distance.');
       } else {
         addNotification(`Found ${filteredTrails.length} nearby trails!`);
-        
-        // Update achievement progress
-        if (filteredTrails.length >= 5) {
-          setAchievements(prev => 
-            prev.map(a => a.id === 6 ? { ...a, progress: 100, earned: true } : a)
-          );
-        }
       }
       
     } catch (error) {
@@ -516,23 +609,27 @@ export default function GreenwichSDARetreatApp() {
     // Process ways as individual trails
     ways.forEach(way => {
       if (way.tags && (way.tags.name || way.tags.ref)) {
+        const lengthKm = way.tags.distance ? parseFloat(way.tags.distance) : 
+                        estimateTrailLength(way.nodes, elements);
+        const distanceMiles = calculateDistanceInMiles(userLat, userLng, 
+                           estimateTrailCenter(way.nodes, elements).lat,
+                           estimateTrailCenter(way.nodes, elements).lng);
+        
         const trail = {
           id: way.id,
           name: way.tags.name || `Trail ${way.id}`,
           type: way.tags.route || 'footpath',
           difficulty: getDifficultyFromTags(way.tags),
-          length: way.tags.distance ? parseFloat(way.tags.distance) : 
-                  estimateTrailLength(way.nodes, elements),
+          length: kmToMiles(lengthKm), // Convert to miles
           elevation: way.tags.ele || null,
           description: way.tags.description || '',
           surface: way.tags.surface || 'unknown',
-          distance: calculateDistance(userLat, userLng, 
-                     estimateTrailCenter(way.nodes, elements).lat,
-                     estimateTrailCenter(way.nodes, elements).lng),
-          nodes: way.nodes || []
+          distance: distanceMiles,
+          nodes: way.nodes || [],
+          alreadyHiked: hikedTrails.some(t => t.id === way.id)
         };
         
-        if (trail.length >= trailFilters.minLength && trail.length <= trailFilters.maxLength) {
+        if (parseFloat(trail.length) >= trailFilters.minLength && parseFloat(trail.length) <= trailFilters.maxLength) {
           trails.push(trail);
         }
       }
@@ -541,20 +638,22 @@ export default function GreenwichSDARetreatApp() {
     // Process relations as longer trails
     relations.forEach(relation => {
       if (relation.tags && relation.tags.name) {
+        const lengthMiles = relation.tags.distance ? kmToMiles(parseFloat(relation.tags.distance)) : 3;
         const trail = {
           id: relation.id,
           name: relation.tags.name,
           type: relation.tags.route || 'hiking',
           difficulty: getDifficultyFromTags(relation.tags),
-          length: relation.tags.distance ? parseFloat(relation.tags.distance) : 5,
+          length: lengthMiles,
           elevation: relation.tags.ele || null,
           description: relation.tags.description || relation.tags.note || '',
           surface: relation.tags.surface || 'trail',
-          distance: 5 + Math.random() * 45, // Estimated distance
-          isRelation: true
+          distance: (5 + Math.random() * 25), // Estimated distance in miles
+          isRelation: true,
+          alreadyHiked: hikedTrails.some(t => t.id === relation.id)
         };
         
-        if (trail.length >= trailFilters.minLength && trail.length <= trailFilters.maxLength) {
+        if (parseFloat(trail.length) >= trailFilters.minLength && parseFloat(trail.length) <= trailFilters.maxLength) {
           trails.push(trail);
         }
       }
@@ -573,7 +672,7 @@ export default function GreenwichSDARetreatApp() {
   };
 
   const estimateTrailLength = (nodeIds, elements) => {
-    // Simplified length estimation
+    // Simplified length estimation in km
     return 2 + Math.random() * 8; // 2-10 km
   };
 
@@ -585,14 +684,27 @@ export default function GreenwichSDARetreatApp() {
     };
   };
 
+  // Calculate distance in miles
+  const calculateDistanceInMiles = (lat1, lon1, lat2, lon2) => {
+    const R = 3958.8; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return (R * c).toFixed(1);
+  };
+
   // Apply trail filters
   const applyTrailFilters = (trails) => {
     return trails.filter(trail => {
       // Distance filter
-      if (trail.distance > trailFilters.maxDistance) return false;
+      if (parseFloat(trail.distance) > trailFilters.maxDistance) return false;
       
       // Length filter
-      if (trail.length < trailFilters.minLength || trail.length > trailFilters.maxLength) return false;
+      const length = parseFloat(trail.length);
+      if (length < trailFilters.minLength || length > trailFilters.maxLength) return false;
       
       // Difficulty filter
       if (trailFilters.difficulty !== 'all') {
@@ -612,55 +724,60 @@ export default function GreenwichSDARetreatApp() {
         name: 'Riverside Path',
         type: 'footpath',
         difficulty: 1,
-        length: 3.2,
+        length: '2.0',
         elevation: '50m',
         description: 'Easy riverside walk perfect for beginners',
         surface: 'gravel',
-        distance: 2.5
+        distance: '1.6',
+        alreadyHiked: hikedTrails.some(t => t.id === 1)
       },
       {
         id: 2,
         name: 'Forest Loop Trail',
         type: 'hiking',
         difficulty: 2,
-        length: 5.8,
+        length: '3.6',
         elevation: '180m',
         description: 'Beautiful forest trail with wildlife spotting opportunities',
         surface: 'dirt',
-        distance: 4.7
+        distance: '2.9',
+        alreadyHiked: hikedTrails.some(t => t.id === 2)
       },
       {
         id: 3,
         name: 'Mountain Ridge Route',
         type: 'hiking',
         difficulty: 4,
-        length: 12.5,
+        length: '7.8',
         elevation: '850m',
         description: 'Challenging ridge walk with spectacular views',
         surface: 'rock',
-        distance: 8.2
+        distance: '5.1',
+        alreadyHiked: hikedTrails.some(t => t.id === 3)
       },
       {
         id: 4,
         name: 'Coastal Cliff Path',
         type: 'coastal',
         difficulty: 3,
-        length: 7.3,
+        length: '4.5',
         elevation: '250m',
         description: 'Stunning coastal walk with sea views',
         surface: 'grass',
-        distance: 6.1
+        distance: '3.8',
+        alreadyHiked: hikedTrails.some(t => t.id === 4)
       },
       {
         id: 5,
         name: 'Lake Circuit',
         type: 'lakeside',
         difficulty: 2,
-        length: 4.5,
+        length: '2.8',
         elevation: '80m',
         description: 'Peaceful walk around the lake',
         surface: 'paved',
-        distance: 3.8
+        distance: '2.4',
+        alreadyHiked: hikedTrails.some(t => t.id === 5)
       }
     ];
   };
@@ -692,6 +809,21 @@ export default function GreenwichSDARetreatApp() {
   useEffect(() => {
     localStorage.setItem('retreatCheckedInAttractions', JSON.stringify(checkedInAttractions));
   }, [checkedInAttractions]);
+
+  // Update progress metrics when relevant data changes
+  useEffect(() => {
+    const newMetrics = {
+      totalMilesHiked: hikedTrails.reduce((sum, trail) => sum + parseFloat(trail.length), 0),
+      trailsCompleted: hikedTrails.length,
+      prayerCount: prayerRequests.filter(p => p.author === userName).length,
+      photosShared: photos.filter(p => p.author === userName).length,
+      checkIns: Object.keys(checkedInAttractions).length,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    setProgressMetrics(newMetrics);
+    localStorage.setItem('retreatProgressMetrics', JSON.stringify(newMetrics));
+  }, [hikedTrails, prayerRequests, photos, checkedInAttractions, userName]);
 
   // Initialize data
   useEffect(() => {
@@ -727,6 +859,18 @@ export default function GreenwichSDARetreatApp() {
     const savedCheckIns = localStorage.getItem('retreatCheckedInAttractions');
     if (savedCheckIns) {
       setCheckedInAttractions(JSON.parse(savedCheckIns));
+    }
+
+    // Load hiked trails
+    const savedHikedTrails = localStorage.getItem('retreatHikedTrails');
+    if (savedHikedTrails) {
+      setHikedTrails(JSON.parse(savedHikedTrails));
+    }
+
+    // Load progress metrics
+    const savedMetrics = localStorage.getItem('retreatProgressMetrics');
+    if (savedMetrics) {
+      setProgressMetrics(JSON.parse(savedMetrics));
     }
 
     // Set achievements
@@ -799,17 +943,6 @@ export default function GreenwichSDARetreatApp() {
     if (currentDay === 'sunday') return { day: 'Sunday', schedule: schedule.sunday, devotional: devotionals.sunday };
     if (currentDay === 'monday') return { day: 'Monday', schedule: schedule.monday, devotional: devotionals.monday };
     return { day: 'Saturday', schedule: schedule.saturday, devotional: devotionals.saturday };
-  };
-
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return (R * c).toFixed(1);
   };
 
   // Prayer request functions
@@ -1005,7 +1138,8 @@ export default function GreenwichSDARetreatApp() {
       ...prev,
       [attractionId]: {
         timestamp: new Date().toISOString(),
-        name: attraction.name
+        name: attraction.name,
+        trailLength: attraction.trailLength || 0
       }
     }));
     
@@ -1020,7 +1154,7 @@ export default function GreenwichSDARetreatApp() {
     // Update achievements
     setAchievements(prev => 
       prev.map(a => {
-        if (a.id === 5 && prev.checkIns + 1 >= 3) {
+        if (a.id === 5 && progressMetrics.checkIns + 1 >= 3) {
           return { ...a, progress: 100, earned: true };
         }
         return a;
@@ -1030,16 +1164,54 @@ export default function GreenwichSDARetreatApp() {
     addNotification(`Checked into ${attraction.name}! +${points} points 🎉`);
   };
 
-  // User stats calculation
-  const userStats = {
-    prayers: prayerRequests.filter(p => p.author === userName).length,
-    testimonials: testimonials.filter(t => t.author === userName).length,
-    photos: photos.filter(p => p.author === userName).length,
-    totalPrayersReceived: prayerRequests
-      .filter(p => p.author === userName)
-      .reduce((total, p) => total + p.prayers, 0),
-    checkIns: Object.keys(checkedInAttractions).length,
-    trailsDiscovered: nearbyTrails.length
+  // Devotional read more function
+  const openDevotionalDetails = (day) => {
+    const devotional = devotionals[day];
+    setShowNotifications(false); // Close any open modals
+    // Show devotional details in a modal
+    const modalContent = `
+      <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 rounded-2xl p-6 max-w-2xl w-full border border-purple-700/50 max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">${devotional.title}</h2>
+            <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-slate-400 hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="space-y-6">
+            <div class="bg-purple-900/30 p-4 rounded-lg">
+              <h3 class="font-semibold mb-2">Scripture</h3>
+              <p class="text-purple-300">${devotional.scripture}</p>
+            </div>
+            
+            <div class="bg-white/5 p-4 rounded-lg italic">
+              "${devotional.quote}"
+            </div>
+            
+            <div>
+              <h3 class="font-semibold mb-2">Full Reflection</h3>
+              <p class="text-slate-300 leading-relaxed">${devotional.content}</p>
+            </div>
+            
+            <div class="pt-4 border-t border-slate-700">
+              <h3 class="font-semibold mb-2">Reflection Questions</h3>
+              <ul class="space-y-2 text-slate-300">
+                <li>• How does this devotional apply to your current situation?</li>
+                <li>• What is one action you can take today based on this teaching?</li>
+                <li>• How can you encourage another brother with this truth?</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const modalDiv = document.createElement('div');
+    modalDiv.innerHTML = modalContent;
+    document.body.appendChild(modalDiv.firstElementChild);
   };
 
   const currentSchedule = getDaySchedule();
@@ -1049,6 +1221,114 @@ export default function GreenwichSDARetreatApp() {
   // ======================
   // COMPONENTS
   // ======================
+
+  // REVISED Progress Tracker Component
+  const ProgressTracker = () => (
+    <div className="mt-6 bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-5 border border-purple-700/30">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <TrendingUpIcon className="w-5 h-5 text-amber-400" />
+          Your Progress Dashboard
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-purple-300">{streakDays} day streak</span>
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+        </div>
+      </div>
+      
+      {/* Progress Grid */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-slate-800/50 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <TrailIcon className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm font-medium">Trails Hiked</span>
+          </div>
+          <div className="text-2xl font-bold">{hikedTrails.length}</div>
+          <div className="text-xs text-slate-400 mt-1">{progressMetrics.totalMilesHiked.toFixed(1)} miles total</div>
+          <div className="mt-2">
+            <div className="w-full bg-slate-700/30 rounded-full h-1.5">
+              <div 
+                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((hikedTrails.length / 5) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <div className="text-xs text-slate-500 mt-1 text-right">
+              {hikedTrails.length}/5 trails
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-slate-800/50 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <TargetIcon className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-medium">Miles Goal</span>
+          </div>
+          <div className="text-2xl font-bold">{progressMetrics.totalMilesHiked.toFixed(1)}</div>
+          <div className="text-xs text-slate-400 mt-1">of 25 miles</div>
+          <div className="mt-2">
+            <div className="w-full bg-slate-700/30 rounded-full h-1.5">
+              <div 
+                className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((progressMetrics.totalMilesHiked / 25) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <div className="text-xs text-slate-500 mt-1 text-right">
+              {Math.min((progressMetrics.totalMilesHiked / 25) * 100, 100).toFixed(1)}%
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Activity Stats */}
+      <div className="mb-6">
+        <h4 className="text-sm font-semibold mb-3 text-slate-300">Activity Summary</h4>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+            <div className="text-lg font-bold text-emerald-400">{progressMetrics.photosShared}</div>
+            <div className="text-xs text-slate-400">Photos</div>
+          </div>
+          <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+            <div className="text-lg font-bold text-teal-400">{progressMetrics.prayerCount}</div>
+            <div className="text-xs text-slate-400">Prayers</div>
+          </div>
+          <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+            <div className="text-lg font-bold text-amber-400">{progressMetrics.checkIns}</div>
+            <div className="text-xs text-slate-400">Check-ins</div>
+          </div>
+          <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+            <div className="text-lg font-bold text-blue-400">{streakDays}</div>
+            <div className="text-xs text-slate-400">Day Streak</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Achievement Preview */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold text-slate-300">Recent Achievements</h4>
+          <span className="text-xs text-slate-400">
+            {achievements.filter(a => a.earned).length}/{achievements.length} earned
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {achievements.slice(0, 3).map(achievement => (
+            <div 
+              key={achievement.id}
+              className={`bg-slate-800/50 rounded-lg p-3 text-center ${achievement.earned ? 'border border-amber-500/30' : 'opacity-70'}`}
+            >
+              <div className="text-xl mb-1">{achievement.icon}</div>
+              <div className="text-xs font-medium truncate">{achievement.name}</div>
+              {!achievement.earned && (
+                <div className="text-xs text-slate-500 mt-1">
+                  {achievement.progress}%
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   // Nearby Trails Component
   const NearbyTrails = () => (
@@ -1072,7 +1352,7 @@ export default function GreenwichSDARetreatApp() {
             </h3>
             {currentLocation ? (
               <p className="text-sm text-slate-400 mt-1">
-                Searching within {trailFilters.maxDistance} km of your location
+                Searching within {trailFilters.maxDistance} miles of your location
               </p>
             ) : (
               <p className="text-sm text-amber-400 mt-1">Enable location to discover trails</p>
@@ -1142,7 +1422,7 @@ export default function GreenwichSDARetreatApp() {
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="text-sm">Max Distance</label>
-              <span className="text-emerald-400 font-medium">{trailFilters.maxDistance} km</span>
+              <span className="text-emerald-400 font-medium">{trailFilters.maxDistance} miles</span>
             </div>
             <input
               type="range"
@@ -1154,32 +1434,32 @@ export default function GreenwichSDARetreatApp() {
               className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-400"
             />
             <div className="flex justify-between text-xs text-slate-500 mt-1">
-              <span>5 km</span>
-              <span>100 km</span>
+              <span>5 miles</span>
+              <span>100 miles</span>
             </div>
           </div>
           
           {/* Length Filters */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm mb-2">Min Length (km)</label>
+              <label className="block text-sm mb-2">Min Length (miles)</label>
               <input
                 type="number"
                 min="0"
-                max="50"
+                max="30"
                 value={trailFilters.minLength}
                 onChange={(e) => setTrailFilters(prev => ({ ...prev, minLength: parseInt(e.target.value) || 0 }))}
                 className="w-full bg-slate-700/50 rounded-lg px-3 py-2.5 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm mb-2">Max Length (km)</label>
+              <label className="block text-sm mb-2">Max Length (miles)</label>
               <input
                 type="number"
                 min="1"
-                max="100"
+                max="30"
                 value={trailFilters.maxLength}
-                onChange={(e) => setTrailFilters(prev => ({ ...prev, maxLength: parseInt(e.target.value) || 50 }))}
+                onChange={(e) => setTrailFilters(prev => ({ ...prev, maxLength: parseInt(e.target.value) || 30 }))}
                 className="w-full bg-slate-700/50 rounded-lg px-3 py-2.5 text-sm"
               />
             </div>
@@ -1212,8 +1492,13 @@ export default function GreenwichSDARetreatApp() {
       {/* Trail Results */}
       <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 border border-slate-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Discovered Trails</h3>
-          <span className="text-sm text-slate-400">{nearbyTrails.length} trails</span>
+          <div>
+            <h3 className="text-lg font-semibold">Nearby Trails</h3>
+            <p className="text-sm text-slate-400 mt-1">
+              {hikedTrails.length} trails hiked • {progressMetrics.totalMilesHiked.toFixed(1)} total miles
+            </p>
+          </div>
+          <span className="text-sm text-slate-400">{nearbyTrails.length} trails found</span>
         </div>
         
         {trailsLoading ? (
@@ -1241,6 +1526,11 @@ export default function GreenwichSDARetreatApp() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="text-lg font-semibold truncate">{trail.name}</h4>
+                      {trail.alreadyHiked && (
+                        <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full text-xs">
+                          Hiked
+                        </span>
+                      )}
                       <span className={`px-2 py-0.5 rounded-full text-xs ${difficultyMap[trail.difficulty]?.color}/20 ${difficultyMap[trail.difficulty]?.text}`}>
                         {difficultyMap[trail.difficulty]?.label}
                       </span>
@@ -1248,12 +1538,12 @@ export default function GreenwichSDARetreatApp() {
                     <div className="flex flex-wrap items-center gap-3 text-sm text-slate-400">
                       <span className="flex items-center gap-1">
                         <Ruler className="w-3 h-3" />
-                        {trail.length} km
+                        {trail.length} miles
                       </span>
                       <span className="hidden sm:inline">•</span>
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        {trail.distance} km away
+                        {trail.distance} miles away
                       </span>
                     </div>
                   </div>
@@ -1284,7 +1574,7 @@ export default function GreenwichSDARetreatApp() {
                   </div>
                   <div className="bg-slate-800/50 rounded-lg p-2">
                     <div className="text-xs text-slate-400 mb-1">Time</div>
-                    <div className="font-medium text-sm">{Math.round(trail.length * 20)} min</div>
+                    <div className="font-medium text-sm">{Math.round(parseFloat(trail.length) * 30)} min</div>
                   </div>
                 </div>
                 
@@ -1303,15 +1593,18 @@ export default function GreenwichSDARetreatApp() {
                     <Book className="w-4 h-4" />
                     Save Trail
                   </button>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trail.name)}+hiking+trail`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => {
+                      trackTrailNavigation(trail);
+                      // Open Google Maps with proper navigation
+                      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(trail.name)}+hiking+trail&travelmode=walking`;
+                      window.open(mapsUrl, '_blank');
+                    }}
                     className="flex-1 bg-slate-700 hover:bg-slate-600 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 text-sm"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    View on Maps
-                  </a>
+                    <Navigation className="w-4 h-4" />
+                    Navigate
+                  </button>
                 </div>
               </div>
             ))}
@@ -1493,75 +1786,6 @@ export default function GreenwichSDARetreatApp() {
     </div>
   );
 
-  // Progress Tracker Component
-  const ProgressTracker = () => (
-    <div className="mt-6 bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-5 border border-purple-700/30">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-amber-400" />
-          Your Progress
-        </h3>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-purple-300">{streakDays} day streak</span>
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-        </div>
-      </div>
-      
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-slate-300">Helvellyn Hike Progress</span>
-          <span className="text-emerald-400">{hikeProgress}%</span>
-        </div>
-        <div className="w-full bg-slate-700/50 rounded-full h-2">
-          <div 
-            className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${hikeProgress}%` }}
-          ></div>
-        </div>
-      </div>
-      
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-2">
-          <span className="text-slate-300">Trails Discovered</span>
-          <span className="text-emerald-400">{userStats.trailsDiscovered}/5</span>
-        </div>
-        <div className="w-full bg-slate-700/50 rounded-full h-2">
-          <div 
-            className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${(userStats.trailsDiscovered / 5) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-      
-      <h4 className="text-sm font-semibold mb-3 text-slate-300">Recent Achievements</h4>
-      <div className="grid grid-cols-2 gap-3">
-        {achievements.map(achievement => (
-          <div 
-            key={achievement.id}
-            className={`bg-slate-800/50 rounded-xl p-3 ${achievement.earned ? 'border border-amber-500/30' : ''}`}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">{achievement.icon}</span>
-              <span className="text-sm font-medium">{achievement.name}</span>
-            </div>
-            <div className="text-xs text-slate-400">{achievement.description}</div>
-            <div className="text-xs text-emerald-400 mt-1">+{achievement.points} pts</div>
-            {!achievement.earned && (
-              <div className="mt-2">
-                <div className="w-full bg-slate-700/30 rounded-full h-1">
-                  <div 
-                    className="bg-emerald-500 h-1 rounded-full"
-                    style={{ width: `${achievement.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   // System Status Component
   const SystemStatus = () => (
     <div className="mt-6 bg-gradient-to-r from-slate-800/40 to-slate-900/40 rounded-2xl p-4 border border-slate-700/30">
@@ -1609,7 +1833,7 @@ export default function GreenwichSDARetreatApp() {
         
         <div className="flex flex-col items-center">
           <TrailIcon className="w-6 h-6 text-emerald-400" />
-          <span className="text-xs mt-1">{userStats.trailsDiscovered}</span>
+          <span className="text-xs mt-1">{hikedTrails.length}</span>
         </div>
       </div>
     </div>
@@ -1689,7 +1913,7 @@ export default function GreenwichSDARetreatApp() {
           <CheckSquare className="w-5 h-5 text-amber-400" />
           Location Check-ins
         </h3>
-        <span className="text-xs text-amber-300">{userStats.checkIns} of 5 checked in</span>
+        <span className="text-xs text-amber-300">{progressMetrics.checkIns} of 5 checked in</span>
       </div>
       
       <div className="space-y-3">
@@ -1746,10 +1970,10 @@ export default function GreenwichSDARetreatApp() {
           <div className="bg-slate-800/50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <Activity className="w-5 h-5 text-emerald-400" />
-              <span className="font-medium">Distance Covered</span>
+              <span className="font-medium">Miles Hiked</span>
             </div>
-            <div className="text-2xl font-bold">0 km</div>
-            <div className="text-xs text-slate-400">Today's hike</div>
+            <div className="text-2xl font-bold">{progressMetrics.totalMilesHiked.toFixed(1)}</div>
+            <div className="text-xs text-slate-400">Total distance</div>
           </div>
           
           <div className="bg-slate-800/50 rounded-xl p-4">
@@ -1757,7 +1981,7 @@ export default function GreenwichSDARetreatApp() {
               <TrendingUp className="w-5 h-5 text-amber-400" />
               <span className="font-medium">Elevation Gain</span>
             </div>
-            <div className="text-2xl font-bold">0 m</div>
+            <div className="text-2xl font-bold">0 ft</div>
             <div className="text-xs text-slate-400">Total climb</div>
           </div>
         </div>
@@ -1896,7 +2120,7 @@ export default function GreenwichSDARetreatApp() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <TrailIcon className="w-3 h-3 text-emerald-400" />
-              <span>{userStats.trailsDiscovered}</span>
+              <span>{hikedTrails.length}</span>
             </div>
             <div className={`w-2 h-2 rounded-full ${
               connectionStatus === 'online' ? 'bg-emerald-500' : 'bg-amber-500'
@@ -1972,6 +2196,13 @@ export default function GreenwichSDARetreatApp() {
                   <p className="mb-2">Reflection:</p>
                   <p>{currentSchedule.devotional.reflection}</p>
                 </div>
+                <button
+                  onClick={() => openDevotionalDetails(currentDay)}
+                  className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1"
+                >
+                  Read Full Devotional
+                  <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
             </div>
 
@@ -2027,7 +2258,7 @@ export default function GreenwichSDARetreatApp() {
                     <Home className="w-5 h-5" />
                     Bury Jubilee Outdoor Pursuits Centre
                   </h4>
-                  <p className="text-slate-300 mb-3">Glenridding, Penrith CA11 0QR</p>
+                  <p className="text-slate-300 mb-3">{baseLocation.address}</p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-xs text-slate-400 mb-1">Latitude</div>
@@ -2042,16 +2273,16 @@ export default function GreenwichSDARetreatApp() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <a 
-                    href="https://maps.app.goo.gl/J672nHZ6qf0Z9kEzt" 
-                    target="_blank" 
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(baseLocation.name)}&destination_place_id=ChIJN1t_tDeuEmsRUsoyG83frY4`}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="bg-slate-700/50 p-4 rounded-lg hover:bg-slate-700 transition-colors"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <Map className="w-5 h-5 text-emerald-400" />
-                      <h4 className="font-semibold">View on Google Maps</h4>
+                      <MapIcon className="w-5 h-5 text-emerald-400" />
+                      <h4 className="font-semibold">Get Directions</h4>
                     </div>
-                    <p className="text-sm text-slate-400">Get directions to the retreat centre</p>
+                    <p className="text-sm text-slate-400">Open in Google Maps for navigation</p>
                   </a>
                   
                   <div className="bg-slate-700/50 p-4 rounded-lg">
@@ -2059,7 +2290,7 @@ export default function GreenwichSDARetreatApp() {
                       <Navigation className="w-5 h-5 text-blue-400" />
                       <h4 className="font-semibold">Coordinates</h4>
                     </div>
-                    <p className="text-sm text-slate-400">Copy to GPS: 54.5262, -2.9620</p>
+                    <p className="text-sm text-slate-400">GPS: 54.5262, -2.9620</p>
                   </div>
                 </div>
               </div>
@@ -2078,11 +2309,19 @@ export default function GreenwichSDARetreatApp() {
                       </div>
                     </div>
                     <p className="text-slate-300 text-sm mb-3">{location.description}</p>
-                    <div className="flex justify-between text-sm">
-                      <div className="text-slate-400">Points: <span className="text-emerald-400">{location.points}</span></div>
-                      <div className="text-slate-400">Distance: <span className="text-blue-400">
-                        {key === 'base' ? 'Base' : calculateDistance(baseLocation.lat, baseLocation.lng, location.lat, location.lng) + ' km'}
-                      </span></div>
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-slate-400">
+                        Distance: <span className="text-blue-400">{location.distanceFromBase} miles</span>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(location.name)}+Lake+District`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-400 hover:text-emerald-300 text-sm font-medium flex items-center gap-1"
+                      >
+                        <Navigation className="w-3 h-3" />
+                        Navigate
+                      </a>
                     </div>
                   </div>
                 ))}
@@ -2131,8 +2370,12 @@ export default function GreenwichSDARetreatApp() {
                   <div className="mt-6 pt-4 border-t border-slate-700">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-400">Daily Reading</span>
-                      <button className="text-purple-400 hover:text-purple-300 text-sm font-medium">
-                        Read More →
+                      <button
+                        onClick={() => openDevotionalDetails(day)}
+                        className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1"
+                      >
+                        Read Full Devotional
+                        <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -2585,15 +2828,15 @@ export default function GreenwichSDARetreatApp() {
               
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-emerald-400">{userStats.photos}</div>
+                  <div className="text-2xl font-bold text-emerald-400">{progressMetrics.photosShared}</div>
                   <div className="text-sm">Photos</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-teal-400">{userStats.prayers}</div>
+                  <div className="text-2xl font-bold text-teal-400">{progressMetrics.prayerCount}</div>
                   <div className="text-sm">Prayers</div>
                 </div>
                 <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-cyan-400">{userStats.trailsDiscovered}</div>
+                  <div className="text-2xl font-bold text-cyan-400">{hikedTrails.length}</div>
                   <div className="text-sm">Trails</div>
                 </div>
               </div>
