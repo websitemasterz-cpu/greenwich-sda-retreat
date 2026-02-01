@@ -1,4 +1,4 @@
-// src/App.jsx - WITH NEARBY TRAILS FEATURE
+// src/App.jsx - WITH ENHANCED TRAIL FINDER
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Calendar, MapPin, Camera, Heart, Book, Users, Mountain, MessageCircle, 
@@ -1052,48 +1052,58 @@ export default function GreenwichSDARetreatApp() {
 
   // Nearby Trails Component
   const NearbyTrails = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
+      {/* Hero Section */}
       <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
-        <h2 className="text-2xl font-bold mb-2">Nearby Hiking Trails</h2>
-        <p className="text-green-100">Discover trails based on your current location</p>
+        <h2 className="text-2xl font-bold mb-2 flex items-center gap-3">
+          <Mountain className="w-7 h-7 text-white" />
+          Trail Finder
+        </h2>
+        <p className="text-green-100">Discover hiking trails based on your current location</p>
       </div>
 
-      {/* Location Info */}
-      <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <TrailIcon className="w-5 h-5 text-emerald-400" />
-            Your Location
-          </h3>
+      {/* Search Controls */}
+      <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 border border-slate-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-emerald-400" />
+              Your Location
+            </h3>
+            {currentLocation ? (
+              <p className="text-sm text-slate-400 mt-1">
+                Searching within {trailFilters.maxDistance} km of your location
+              </p>
+            ) : (
+              <p className="text-sm text-amber-400 mt-1">Enable location to discover trails</p>
+            )}
+          </div>
+          
           <button 
             onClick={fetchNearbyTrails}
-            disabled={trailsLoading}
-            className="text-sm bg-emerald-600 hover:bg-emerald-700 px-3 py-1 rounded-lg flex items-center gap-2"
+            disabled={trailsLoading || !currentLocation}
+            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RefreshCw className={`w-4 h-4 ${trailsLoading ? 'animate-spin' : ''}`} />
-            {trailsLoading ? 'Searching...' : 'Refresh Trails'}
+            {trailsLoading ? 'Searching...' : 'Find Trails'}
           </button>
         </div>
         
+        {/* Location Details */}
         {currentLocation ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-700/50 rounded-lg p-3">
-                <p className="text-xs text-slate-400 mb-1">Latitude</p>
-                <p className="text-slate-300 font-mono">{currentLocation.lat.toFixed(6)}°</p>
-              </div>
-              <div className="bg-slate-700/50 rounded-lg p-3">
-                <p className="text-xs text-slate-400 mb-1">Longitude</p>
-                <p className="text-slate-300 font-mono">{currentLocation.lng.toFixed(6)}°</p>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Latitude</p>
+              <p className="text-slate-300 font-mono text-sm">{currentLocation.lat.toFixed(6)}°</p>
             </div>
-            <p className="text-sm text-emerald-400">
-              Searching within {trailFilters.maxDistance} km radius
-            </p>
+            <div className="bg-slate-700/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Longitude</p>
+              <p className="text-slate-300 font-mono text-sm">{currentLocation.lng.toFixed(6)}°</p>
+            </div>
           </div>
         ) : (
           <div className="text-center py-4">
-            <p className="text-slate-400 mb-2">Enable location to discover nearby trails</p>
+            <p className="text-slate-400 mb-3">Enable location services to discover nearby trails</p>
             <button 
               onClick={() => {
                 if (navigator.geolocation) {
@@ -1103,29 +1113,37 @@ export default function GreenwichSDARetreatApp() {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                       });
+                      addNotification('Location enabled! 🌍');
                     },
-                    (error) => alert('Please enable location access')
+                    (error) => {
+                      addNotification('Please enable location access in browser settings');
+                    }
                   );
                 }
               }}
-              className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
+              className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 mx-auto"
             >
+              <MapPin className="w-4 h-4" />
               Enable Location
             </button>
           </div>
         )}
       </div>
 
-      {/* Trail Filters */}
-      <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+      {/* Filters - Mobile Optimized */}
+      <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 border border-slate-700">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Filter className="w-5 h-5 text-blue-400" />
           Trail Filters
         </h3>
         
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {/* Distance Slider */}
           <div>
-            <label className="block text-sm mb-2">Max Distance: {trailFilters.maxDistance} km</label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-sm">Max Distance</label>
+              <span className="text-emerald-400 font-medium">{trailFilters.maxDistance} km</span>
+            </div>
             <input
               type="range"
               min="5"
@@ -1133,7 +1151,7 @@ export default function GreenwichSDARetreatApp() {
               step="5"
               value={trailFilters.maxDistance}
               onChange={(e) => setTrailFilters(prev => ({ ...prev, maxDistance: parseInt(e.target.value) }))}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-400"
             />
             <div className="flex justify-between text-xs text-slate-500 mt-1">
               <span>5 km</span>
@@ -1141,6 +1159,7 @@ export default function GreenwichSDARetreatApp() {
             </div>
           </div>
           
+          {/* Length Filters */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm mb-2">Min Length (km)</label>
@@ -1150,7 +1169,7 @@ export default function GreenwichSDARetreatApp() {
                 max="50"
                 value={trailFilters.minLength}
                 onChange={(e) => setTrailFilters(prev => ({ ...prev, minLength: parseInt(e.target.value) || 0 }))}
-                className="w-full bg-slate-700/50 rounded-lg px-3 py-2"
+                className="w-full bg-slate-700/50 rounded-lg px-3 py-2.5 text-sm"
               />
             </div>
             <div>
@@ -1161,11 +1180,12 @@ export default function GreenwichSDARetreatApp() {
                 max="100"
                 value={trailFilters.maxLength}
                 onChange={(e) => setTrailFilters(prev => ({ ...prev, maxLength: parseInt(e.target.value) || 50 }))}
-                className="w-full bg-slate-700/50 rounded-lg px-3 py-2"
+                className="w-full bg-slate-700/50 rounded-lg px-3 py-2.5 text-sm"
               />
             </div>
           </div>
           
+          {/* Difficulty Filter */}
           <div>
             <label className="block text-sm mb-2">Difficulty</label>
             <div className="flex flex-wrap gap-2">
@@ -1175,8 +1195,10 @@ export default function GreenwichSDARetreatApp() {
                   onClick={() => setTrailFilters(prev => ({ ...prev, difficulty: level }))}
                   className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
                     trailFilters.difficulty === level
-                      ? level === 'all' ? 'bg-blue-600' : difficultyMap[level]?.color.replace('bg-', 'bg-')
-                      : 'bg-slate-700/50 hover:bg-slate-700'
+                      ? level === 'all' 
+                        ? 'bg-blue-600 text-white' 
+                        : `${difficultyMap[level]?.color} text-white`
+                      : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
                   }`}
                 >
                   {level === 'all' ? 'All Levels' : difficultyMap[level]?.label}
@@ -1188,10 +1210,10 @@ export default function GreenwichSDARetreatApp() {
       </div>
 
       {/* Trail Results */}
-      <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+      <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 border border-slate-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Nearby Trails</h3>
-          <span className="text-sm text-slate-400">{nearbyTrails.length} trails found</span>
+          <h3 className="text-lg font-semibold">Discovered Trails</h3>
+          <span className="text-sm text-slate-400">{nearbyTrails.length} trails</span>
         </div>
         
         {trailsLoading ? (
@@ -1200,9 +1222,9 @@ export default function GreenwichSDARetreatApp() {
             <p className="text-slate-400">Searching for trails near you...</p>
           </div>
         ) : trailsError ? (
-          <div className="text-center py-12">
-            <TrailIcon className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-            <p className="text-slate-400 mb-2">{trailsError}</p>
+          <div className="text-center py-8">
+            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-amber-400" />
+            <p className="text-slate-400 mb-3">{trailsError}</p>
             <button 
               onClick={fetchNearbyTrails}
               className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
@@ -1211,74 +1233,81 @@ export default function GreenwichSDARetreatApp() {
             </button>
           </div>
         ) : nearbyTrails.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 trail-results">
             {nearbyTrails.map(trail => (
-              <div key={trail.id} className="bg-slate-700/50 rounded-xl p-5 border border-slate-600 hover:border-emerald-500/50 transition-colors">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="text-lg font-semibold mb-1">{trail.name}</h4>
-                    <div className="flex items-center gap-3 text-sm text-slate-400">
+              <div key={trail.id} className="bg-slate-700/50 rounded-xl p-4 border border-slate-600 hover:border-emerald-500/50 transition-colors">
+                {/* Trail Header */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="text-lg font-semibold truncate">{trail.name}</h4>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${difficultyMap[trail.difficulty]?.color}/20 ${difficultyMap[trail.difficulty]?.text}`}>
+                        {difficultyMap[trail.difficulty]?.label}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-400">
                       <span className="flex items-center gap-1">
                         <Ruler className="w-3 h-3" />
                         {trail.length} km
                       </span>
-                      <span>•</span>
+                      <span className="hidden sm:inline">•</span>
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {trail.distance} km away
-                      </span>
-                      <span>•</span>
-                      <span className={`px-2 py-0.5 rounded-full ${difficultyMap[trail.difficulty]?.color}/20 ${difficultyMap[trail.difficulty]?.text}`}>
-                        {difficultyMap[trail.difficulty]?.label}
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    <span className="text-sm">{(4 + Math.random()).toFixed(1)}</span>
+                    <span className="text-sm font-medium">{(4 + Math.random()).toFixed(1)}</span>
                   </div>
                 </div>
                 
-                <p className="text-slate-300 mb-4">{trail.description || 'Scenic hiking trail with beautiful views.'}</p>
+                {/* Trail Description */}
+                <p className="text-slate-300 text-sm mb-4 line-clamp-2">
+                  {trail.description || 'Scenic hiking trail with beautiful views and well-maintained paths.'}
+                </p>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                  <div className="bg-slate-800/50 rounded-lg p-3">
+                {/* Trail Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                  <div className="bg-slate-800/50 rounded-lg p-2">
                     <div className="text-xs text-slate-400 mb-1">Type</div>
-                    <div className="font-medium">{trail.type}</div>
+                    <div className="font-medium text-sm capitalize">{trail.type}</div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="bg-slate-800/50 rounded-lg p-2">
                     <div className="text-xs text-slate-400 mb-1">Surface</div>
-                    <div className="font-medium capitalize">{trail.surface}</div>
+                    <div className="font-medium text-sm capitalize">{trail.surface}</div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="bg-slate-800/50 rounded-lg p-2">
                     <div className="text-xs text-slate-400 mb-1">Elevation</div>
-                    <div className="font-medium">{trail.elevation || 'Varies'}</div>
+                    <div className="font-medium text-sm">{trail.elevation || 'Varies'}</div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-3">
-                    <div className="text-xs text-slate-400 mb-1">Estimated Time</div>
-                    <div className="font-medium">{Math.round(trail.length * 20)} mins</div>
+                  <div className="bg-slate-800/50 rounded-lg p-2">
+                    <div className="text-xs text-slate-400 mb-1">Time</div>
+                    <div className="font-medium text-sm">{Math.round(trail.length * 20)} min</div>
                   </div>
                 </div>
                 
-                <div className="flex gap-3">
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => {
-                      addNotification(`Saved ${trail.name} to your trails!`);
+                      addNotification(`Saved "${trail.name}" to your trails!`);
                       setCurrentUser(prev => ({
                         ...prev,
                         points: prev.points + 5
                       }));
                     }}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 py-2 rounded-lg font-medium flex items-center justify-center gap-2"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 text-sm"
                   >
                     <Book className="w-4 h-4" />
                     Save Trail
                   </button>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${trail.name}+hiking+trail`}
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trail.name)}+hiking+trail`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg font-medium flex items-center justify-center gap-2"
+                    className="flex-1 bg-slate-700 hover:bg-slate-600 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 text-sm"
                   >
                     <ExternalLink className="w-4 h-4" />
                     View on Maps
@@ -1288,41 +1317,38 @@ export default function GreenwichSDARetreatApp() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
+          <div className="text-center py-8">
             <TrailIcon className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-            <p className="text-slate-400">No trails found. Try adjusting your filters or location.</p>
+            <p className="text-slate-400">No trails found matching your criteria.</p>
+            <p className="text-sm text-slate-500 mt-1">Try adjusting filters or enabling location.</p>
           </div>
         )}
       </div>
 
-      {/* Trail Tips */}
-      <div className="bg-gradient-to-r from-blue-800/40 to-cyan-800/40 rounded-2xl p-6 border border-blue-700/30">
+      {/* Safety Tips */}
+      <div className="bg-gradient-to-r from-blue-800/40 to-cyan-800/40 rounded-2xl p-5 border border-blue-700/30">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-blue-400" />
+          <Shield className="w-5 h-5 text-blue-400" />
           Hiking Safety Tips
         </h3>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="flex items-start gap-2">
             <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <span>Check weather conditions before hiking</span>
-          </li>
-          <li className="flex items-start gap-2">
+            <span className="text-sm">Check weather before hiking</span>
+          </div>
+          <div className="flex items-start gap-2">
             <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <span>Bring enough water and snacks</span>
-          </li>
-          <li className="flex items-start gap-2">
+            <span className="text-sm">Bring water and snacks</span>
+          </div>
+          <div className="flex items-start gap-2">
             <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <span>Wear appropriate footwear and clothing</span>
-          </li>
-          <li className="flex items-start gap-2">
+            <span className="text-sm">Wear appropriate footwear</span>
+          </div>
+          <div className="flex items-start gap-2">
             <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <span>Tell someone your planned route and return time</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-            <span>Carry a charged phone and portable charger</span>
-          </li>
-        </ul>
+            <span className="text-sm">Tell someone your route</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1746,22 +1772,18 @@ export default function GreenwichSDARetreatApp() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Logo */}
+              {/* Logo with White Mountain Icon */}
               <a 
                 href="https://photos.app.goo.gl/J672nHZ6qf0Z9kEzt" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+                className="flex items-center gap-2 hover:opacity-90 transition-opacity group"
               >
-                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <img 
-      src="https://images.squarespace-cdn.com/content/v1/590fd8abe4fcb51284015b20/afe1b31a-bc8f-43db-b878-e5b9b454f75c/OurIdentityLOGO.png?format=2500w" 
-      alt="Mountain Logo" 
-      className="w-8 h-8"
-    />
+                <div className="w-10 h-10 bg-white/10 backdrop-blur rounded-lg flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                  <Mountain className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold tracking-tight">Greenwich SDA Church</h1>
+                  <h1 className="text-xl font-bold tracking-tight">Greenwich SDA</h1>
                   <p className="text-emerald-200 text-xs">Men's Retreat 2026</p>
                 </div>
               </a>
@@ -1836,7 +1858,7 @@ export default function GreenwichSDARetreatApp() {
       {/* Navigation Tabs - Mobile Optimized with NEW TRAILS TAB */}
       <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-2 sm:px-4">
-          <div className="flex overflow-x-auto pb-1 hide-scrollbar">
+          <div className="flex overflow-x-auto pb-1 hide-scrollbar scroll-smooth snap-x snap-mandatory">
             {[
               { id: 'schedule', icon: Calendar, label: 'Schedule' },
               { id: 'location', icon: Navigation, label: 'Location' },
@@ -1845,18 +1867,18 @@ export default function GreenwichSDARetreatApp() {
               { id: 'prayer', icon: Heart, label: 'Prayer' },
               { id: 'testimonials', icon: MessageCircle, label: 'Stories' },
               { id: 'attractions', icon: Mountain, label: 'Attractions' },
-              { id: 'trails', icon: TrailIcon, label: 'Trails' } // NEW TAB
+              { id: 'trails', icon: TrailIcon, label: 'Trails' }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-3 border-b-2 transition-all whitespace-nowrap min-w-[80px] ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 border-b-2 transition-all whitespace-nowrap min-w-[90px] snap-start ${
                   activeTab === tab.id
-                    ? 'border-emerald-400 text-emerald-400'
-                    : 'border-transparent text-slate-400 hover:text-white'
+                    ? 'border-emerald-400 text-emerald-400 bg-slate-800/20'
+                    : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/10'
                 }`}
               >
-                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <tab.icon className="w-5 h-5" />
                 <span className="text-xs font-medium">{tab.label}</span>
               </button>
             ))}
@@ -1894,7 +1916,64 @@ export default function GreenwichSDARetreatApp() {
               <p className="text-blue-100">21-24 August 2026</p>
             </div>
 
-            {/* ... schedule content ... */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Today's Activities</h3>
+              <div className="space-y-3">
+                {currentSchedule.schedule.map((item, index) => {
+                  const itemTime = parseFloat(item.time.replace(':', '.'));
+                  const isPast = itemTime < currentHour;
+                  const isCurrent = itemTime <= currentHour && currentHour < itemTime + 0.5;
+                  
+                  return (
+                    <div 
+                      key={index}
+                      className={`p-4 rounded-lg transition-all ${
+                        isCurrent 
+                          ? 'bg-emerald-900/30 border-l-4 border-emerald-400' 
+                          : isPast 
+                            ? 'bg-slate-700/30' 
+                            : 'bg-slate-800/50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="text-center">
+                          <div className="text-lg font-bold">{item.time}</div>
+                          <div className="text-xs text-slate-400 mt-1">{isCurrent ? 'NOW' : isPast ? 'Done' : 'Upcoming'}</div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xl">{item.emoji}</span>
+                            <h4 className="font-semibold">{item.activity}</h4>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-slate-400">
+                            <MapPin className="w-3 h-3" />
+                            <span>{item.location === 'base' ? 'Bury Jubilee Centre' : item.location}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Devotional Section */}
+            <div className="bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-6 border border-purple-700/30">
+              <h3 className="text-lg font-semibold mb-4">Today's Devotional</h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-xl font-bold mb-2">{currentSchedule.devotional.title}</h4>
+                  <p className="text-sm text-purple-300">{currentSchedule.devotional.scripture}</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-lg italic">
+                  "{currentSchedule.devotional.quote}"
+                </div>
+                <div className="text-slate-300">
+                  <p className="mb-2">Reflection:</p>
+                  <p>{currentSchedule.devotional.reflection}</p>
+                </div>
+              </div>
+            </div>
 
             {/* ENHANCED FEATURES */}
             <EnhancedWeather />
@@ -1935,42 +2014,464 @@ export default function GreenwichSDARetreatApp() {
         {/* Location Tab */}
         {activeTab === 'location' && (
           <div className="space-y-6">
-            {/* ... location content ... */}
+            <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Location & Navigation</h2>
+              <p className="text-blue-100">Find your way around the Lake District</p>
+            </div>
+
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Base Location</h3>
+              <div className="space-y-4">
+                <div className="bg-emerald-900/30 p-4 rounded-lg">
+                  <h4 className="font-semibold flex items-center gap-2 mb-2">
+                    <Home className="w-5 h-5" />
+                    Bury Jubilee Outdoor Pursuits Centre
+                  </h4>
+                  <p className="text-slate-300 mb-3">Glenridding, Penrith CA11 0QR</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-slate-400 mb-1">Latitude</div>
+                      <div className="font-mono">54.5262° N</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400 mb-1">Longitude</div>
+                      <div className="font-mono">2.9620° W</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <a 
+                    href="https://maps.app.goo.gl/J672nHZ6qf0Z9kEzt" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-slate-700/50 p-4 rounded-lg hover:bg-slate-700 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Map className="w-5 h-5 text-emerald-400" />
+                      <h4 className="font-semibold">View on Google Maps</h4>
+                    </div>
+                    <p className="text-sm text-slate-400">Get directions to the retreat centre</p>
+                  </a>
+                  
+                  <div className="bg-slate-700/50 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Navigation className="w-5 h-5 text-blue-400" />
+                      <h4 className="font-semibold">Coordinates</h4>
+                    </div>
+                    <p className="text-sm text-slate-400">Copy to GPS: 54.5262, -2.9620</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Key Hiking Locations</h3>
+              <div className="space-y-4">
+                {Object.entries(locations).map(([key, location]) => (
+                  <div key={key} className="bg-slate-700/30 p-4 rounded-lg border border-slate-600">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-2xl">{location.icon}</span>
+                      <div>
+                        <h4 className="font-semibold">{location.name}</h4>
+                        <div className="text-xs text-slate-400">{location.difficulty}</div>
+                      </div>
+                    </div>
+                    <p className="text-slate-300 text-sm mb-3">{location.description}</p>
+                    <div className="flex justify-between text-sm">
+                      <div className="text-slate-400">Points: <span className="text-emerald-400">{location.points}</span></div>
+                      <div className="text-slate-400">Distance: <span className="text-blue-400">
+                        {key === 'base' ? 'Base' : calculateDistance(baseLocation.lat, baseLocation.lng, location.lat, location.lng) + ' km'}
+                      </span></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <EnhancedWeather />
+            <EmergencyFeatures />
           </div>
         )}
 
         {/* Devotional Tab */}
         {activeTab === 'devotional' && (
           <div className="space-y-6">
-            {/* ... devotional content ... */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Daily Devotionals</h2>
+              <p className="text-purple-100">Spiritual nourishment for the retreat</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.entries(devotionals).map(([day, devotional]) => (
+                <div 
+                  key={day}
+                  className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700 hover:border-purple-500/50 transition-colors"
+                >
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold capitalize mb-2">{day}</h3>
+                    <div className="text-sm text-purple-300 px-3 py-1 bg-purple-900/30 rounded-full inline-block">
+                      {devotional.scripture}
+                    </div>
+                  </div>
+                  
+                  <h4 className="text-xl font-bold mb-4">{devotional.title}</h4>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-white/5 p-4 rounded-lg italic">
+                      "{devotional.quote}"
+                    </div>
+                    
+                    <div className="text-slate-300">
+                      <p className="font-medium mb-2">Reflection:</p>
+                      <p>{devotional.reflection}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t border-slate-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-400">Daily Reading</span>
+                      <button className="text-purple-400 hover:text-purple-300 text-sm font-medium">
+                        Read More →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-6 border border-purple-700/30">
+              <h3 className="text-lg font-semibold mb-4">Prayer Journal</h3>
+              <div className="space-y-4">
+                <textarea
+                  placeholder="Write your personal reflections, prayers, or insights here..."
+                  className="w-full bg-slate-800/50 rounded-xl p-4 min-h-[200px] resize-none"
+                  rows={5}
+                />
+                <div className="flex justify-end">
+                  <button className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-medium">
+                    Save Reflection
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Photos Tab */}
         {activeTab === 'photos' && (
           <div className="space-y-6">
-            {/* ... photos content ... */}
+            <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Photo Gallery</h2>
+              <p className="text-pink-100">Share and view retreat memories</p>
+            </div>
+
+            {/* Upload Section */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Share Your Photos</h3>
+                  <p className="text-sm text-slate-400">Upload photos from the retreat</p>
+                </div>
+                
+                <label className="cursor-pointer bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 rounded-lg font-medium hover:from-pink-600 hover:to-rose-600 transition-all">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    <span>Upload Photo</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Photo Grid */}
+            {photos.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {photos.map(photo => (
+                  <div key={photo.id} className="bg-slate-800/70 backdrop-blur rounded-xl overflow-hidden border border-slate-700">
+                    <div className="relative">
+                      <img 
+                        src={photo.src} 
+                        alt="Retreat photo" 
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <button 
+                          onClick={() => likePhoto(photo.id)}
+                          className="bg-slate-900/80 backdrop-blur rounded-full p-2 hover:bg-rose-500/20 transition-colors"
+                        >
+                          <Heart className={`w-4 h-4 ${photo.likes > 0 ? 'text-rose-400' : 'text-white'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{photo.author}</span>
+                          <span className="text-xs text-slate-500">•</span>
+                          <span className="text-xs text-slate-500">
+                            {new Date(photo.timestamp).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                          <Heart className="w-3 h-3" />
+                          <span>{photo.likes}</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-slate-300 text-sm mb-4">{photo.caption}</p>
+                      
+                      {/* Comments */}
+                      {photo.comments.length > 0 && (
+                        <div className="border-t border-slate-700 pt-3 mt-3">
+                          <div className="text-xs text-slate-500 mb-2">Comments ({photo.comments.length})</div>
+                          {photo.comments.slice(0, 2).map(comment => (
+                            <div key={comment.id} className="text-sm mb-2">
+                              <span className="font-medium">{comment.author}: </span>
+                              <span className="text-slate-300">{comment.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Camera className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                <p className="text-slate-400">No photos yet. Be the first to share!</p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Prayer Tab */}
         {activeTab === 'prayer' && (
           <div className="space-y-6">
-            {/* ... prayer content ... */}
+            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Prayer Requests</h2>
+              <p className="text-teal-100">Share and pray for one another</p>
+            </div>
+
+            {/* Add Prayer Request */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Share a Prayer Request</h3>
+              <div className="space-y-4">
+                <textarea
+                  value={prayerText}
+                  onChange={(e) => setPrayerText(e.target.value)}
+                  placeholder="Share what's on your heart..."
+                  className="w-full bg-slate-700/50 rounded-xl p-4 min-h-[120px] resize-none"
+                  rows={4}
+                />
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      if (prayerText.trim()) {
+                        addPrayerRequest(prayerText, userName);
+                        setPrayerText('');
+                      }
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 px-6 py-2 rounded-lg font-medium"
+                  >
+                    Share Request
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Prayer Requests List */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold">Prayer Requests</h3>
+                <span className="text-sm text-slate-400">{prayerRequests.length} requests</span>
+              </div>
+              
+              {prayerRequests.length > 0 ? (
+                <div className="space-y-4">
+                  {prayerRequests.map(request => (
+                    <div key={request.id} className="bg-slate-700/30 rounded-xl p-5 border border-slate-600">
+                      <div className="mb-4">
+                        <p className="text-slate-300 mb-3">{request.text}</p>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">by {request.author}</span>
+                            <span className="text-slate-600">•</span>
+                            <span className="text-slate-500">
+                              {new Date(request.timestamp).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => incrementPrayerCount(request.id)}
+                              className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300"
+                            >
+                              <Heart className="w-4 h-4" />
+                              <span>Pray ({request.prayers})</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Heart className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                  <p className="text-slate-400">No prayer requests yet. Be the first to share!</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Testimonials Tab */}
         {activeTab === 'testimonials' && (
           <div className="space-y-6">
-            {/* ... testimonials content ... */}
+            <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Shared Stories</h2>
+              <p className="text-amber-100">Testimonies and experiences from the retreat</p>
+            </div>
+
+            {/* Add Testimonial */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold mb-4">Share Your Story</h3>
+              <div className="space-y-4">
+                <textarea
+                  value={testimonialText}
+                  onChange={(e) => setTestimonialText(e.target.value)}
+                  placeholder="Share how God is working during this retreat..."
+                  className="w-full bg-slate-700/50 rounded-xl p-4 min-h-[120px] resize-none"
+                  rows={4}
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      if (testimonialText.trim()) {
+                        addTestimonial(testimonialText, userName);
+                        setTestimonialText('');
+                      }
+                    }}
+                    className="bg-amber-600 hover:bg-amber-700 px-6 py-2 rounded-lg font-medium"
+                  >
+                    Share Story
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimonials List */}
+            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold">Recent Stories</h3>
+                <span className="text-sm text-slate-400">{testimonials.length} stories</span>
+              </div>
+              
+              {testimonials.length > 0 ? (
+                <div className="space-y-4">
+                  {testimonials.map(testimonial => (
+                    <div key={testimonial.id} className="bg-slate-700/30 rounded-xl p-5 border border-slate-600">
+                      <div className="mb-4">
+                        <p className="text-slate-300 mb-3 italic">"{testimonial.text}"</p>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">— {testimonial.author}</span>
+                            <span className="text-slate-600">•</span>
+                            <span className="text-slate-500">
+                              {new Date(testimonial.timestamp).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => likeTestimonial(testimonial.id)}
+                              className="flex items-center gap-2 text-amber-400 hover:text-amber-300"
+                            >
+                              <Heart className="w-4 h-4" />
+                              <span>{testimonial.likes}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <MessageCircle className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                  <p className="text-slate-400">No stories yet. Share how God is working!</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Attractions Tab */}
         {activeTab === 'attractions' && (
           <div className="space-y-6">
-            {/* ... attractions content ... */}
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Local Attractions</h2>
+              <p className="text-indigo-100">Explore the Lake District's beauty</p>
+            </div>
+
+            {/* Attractions Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {attractions.map(attraction => (
+                <div key={attraction.id} className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700 hover:border-indigo-500/50 transition-colors">
+                  <div className="flex items-start gap-4 mb-4">
+                    <span className="text-4xl">{attraction.icon}</span>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-2">{attraction.name}</h3>
+                      <div className="flex items-center gap-4 text-sm text-slate-400 mb-3">
+                        <span className="flex items-center gap-1">
+                          <Ruler className="w-3 h-3" />
+                          {attraction.distance}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <TimeIcon className="w-3 h-3" />
+                          {attraction.duration}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${
+                          attraction.difficulty === 'Easy' ? 'bg-emerald-500/20 text-emerald-300' :
+                          attraction.difficulty === 'Moderate' ? 'bg-amber-500/20 text-amber-300' :
+                          'bg-orange-500/20 text-orange-300'
+                        }`}>
+                          {attraction.difficulty}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-slate-300 mb-6">{attraction.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-lg font-bold text-emerald-400">+{attraction.points} pts</div>
+                    
+                    <button
+                      onClick={() => checkIntoAttraction(attraction.id)}
+                      disabled={checkedInAttractions[attraction.id]}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                        checkedInAttractions[attraction.id]
+                          ? 'bg-emerald-500/20 text-emerald-300'
+                          : 'bg-indigo-600 hover:bg-indigo-700'
+                      }`}
+                    >
+                      {checkedInAttractions[attraction.id] ? 'Checked In ✓' : 'Check In'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <CheckInComponent />
+            <EnhancedWeather />
+            <EmergencyFeatures />
           </div>
         )}
 
@@ -2134,7 +2635,7 @@ export default function GreenwichSDARetreatApp() {
               className="flex items-center gap-2 hover:text-emerald-300 transition-colors"
             >
               <div className="w-8 h-8 bg-emerald-600 rounded flex items-center justify-center">
-                <span className="text-lg">🌄</span>
+                <Mountain className="w-5 h-5 text-white" />
               </div>
               <span>Greenwich SDA Men's Ministry</span>
             </a>
@@ -2162,6 +2663,77 @@ export default function GreenwichSDARetreatApp() {
         }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
+        }
+        
+        /* Custom scrollbar for trail results */
+        .trail-results::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .trail-results::-webkit-scrollbar-track {
+          background: #1e293b;
+          border-radius: 4px;
+        }
+        
+        .trail-results::-webkit-scrollbar-thumb {
+          background: #10b981;
+          border-radius: 4px;
+        }
+        
+        .trail-results::-webkit-scrollbar-thumb:hover {
+          background: #059669;
+        }
+        
+        /* Range slider styling */
+        input[type="range"] {
+          -webkit-appearance: none;
+          height: 6px;
+          border-radius: 3px;
+          background: #334155;
+          outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #10b981;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #10b981;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Line clamp for descriptions */
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        /* Smooth scrolling for tabs */
+        .scroll-smooth {
+          scroll-behavior: smooth;
+        }
+        
+        .snap-x {
+          scroll-snap-type: x mandatory;
+        }
+        
+        .snap-start {
+          scroll-snap-align: start;
         }
       `}</style>
     </div>
