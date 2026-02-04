@@ -1,7 +1,11 @@
-// src/components/CheckInComponent.jsx
+// src/components/SharedComponents.jsx - FIXED VERSION
 import React from 'react';
 import { CheckSquare, CheckCircle } from 'lucide-react';
+import { AlertCircle, Phone, Shield } from 'lucide-react';
+import { TrendingUp as TrendingUpIcon, MapPin as TrailIcon, Target as TargetIcon } from 'lucide-react';
+import { Share, Download, Mountain } from 'lucide-react';
 
+// src/components/CheckInComponent.jsx
 export default function CheckInComponent({ attractions, checkedInAttractions, checkIntoAttraction, progressMetrics }) {
   return (
     <div className="mt-6 bg-gradient-to-r from-amber-800/40 to-orange-800/40 rounded-2xl p-5 border border-amber-700/30">
@@ -53,8 +57,6 @@ export default function CheckInComponent({ attractions, checkedInAttractions, ch
 }
 
 // src/components/EmergencyFeatures.jsx
-import { AlertCircle, Phone, Shield } from 'lucide-react';
-
 export function EmergencyFeatures() {
   const emergencyContactsData = [
     { id: 1, name: 'Retreat Leader', phone: '+44 7911 123456', role: 'Emergency Contact', icon: <Phone className="w-4 h-4" /> },
@@ -97,8 +99,6 @@ export function EmergencyFeatures() {
 }
 
 // src/components/ProgressTracker.jsx
-import { TrendingUp as TrendingUpIcon, MapPin as TrailIcon, Target as TargetIcon } from 'lucide-react';
-
 export function ProgressTracker({ hikedTrails, progressMetrics, streakDays }) {
   return (
     <div className="mt-6 bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-5 border border-purple-700/30">
@@ -178,8 +178,6 @@ export function ProgressTracker({ hikedTrails, progressMetrics, streakDays }) {
 }
 
 // src/components/QuickActions.jsx
-import { Share, CheckCircle, Download, Mountain } from 'lucide-react';
-
 export function QuickActions({ addNotification, setStreakDays, currentUser, setCurrentUser }) {
   return (
     <div className="mt-6 grid grid-cols-4 gap-3">
@@ -243,6 +241,3 @@ export function QuickActions({ addNotification, setStreakDays, currentUser, setC
     </div>
   );
 }
-
-export default CheckInComponent;
-export { EmergencyFeatures, ProgressTracker, QuickActions };
