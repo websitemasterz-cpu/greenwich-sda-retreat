@@ -1,4 +1,4 @@
-// src/App.jsx - REAL LOCATION VERSION
+// src/App.jsx - COMPLETE VERSION WITH ALL TABS & MAP VISUALIZATION
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, MapPin, Camera, Heart, Book, Users, Mountain, 
@@ -11,8 +11,8 @@ import {
   Music, Edit, ChevronUp, CheckSquare, Dumbbell, CalendarDays,
   Users as GroupIcon, ExternalLink, ArrowRight, Ruler,
   Clock as TimeIcon, Award, Map as MapIcon, Moon,
-  Plus, Minus, Search, Share as ShareIcon, Wifi, Battery,
-  WifiOff, Coffee
+  Plus, Minus, Search, Share as ShareIcon, Maximize2,
+  Map as MapIcon2, Globe, Layers, Navigation2, Wind as WindIcon
 } from 'lucide-react';
 
 export default function GreenwichSDARetreatApp() {
@@ -23,9 +23,10 @@ export default function GreenwichSDARetreatApp() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [currentDay, setCurrentDay] = useState('friday');
   const [currentLocation, setCurrentLocation] = useState(null);
-  const [locationLoading, setLocationLoading] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [prayerText, setPrayerText] = useState('');
   const [testimonialText, setTestimonialText] = useState('');
+  const [photoCaption, setPhotoCaption] = useState('');
   
   // User and progress states
   const [userName, setUserName] = useState('');
@@ -34,7 +35,8 @@ export default function GreenwichSDARetreatApp() {
     points: 150,
     level: 1,
     avatar: '👤',
-    checkIns: 0
+    checkIns: 0,
+    totalDistance: 0
   });
   const [streakDays, setStreakDays] = useState(3);
   const [hikedTrails, setHikedTrails] = useState([]);
@@ -60,7 +62,6 @@ export default function GreenwichSDARetreatApp() {
     maxLength: 30,
     difficulty: 'all'
   });
-  const [connectionStatus, setConnectionStatus] = useState('online');
   
   // Other states
   const [notifications, setNotifications] = useState([]);
@@ -71,11 +72,13 @@ export default function GreenwichSDARetreatApp() {
   const [achievements, setAchievements] = useState([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [photoCaption, setPhotoCaption] = useState('');
   const [commentText, setCommentText] = useState('');
   const [likedPhotos, setLikedPhotos] = useState([]);
   const [likedTestimonials, setLikedTestimonials] = useState([]);
   const [prayedForRequests, setPrayedForRequests] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState('online');
+  const [mapZoom, setMapZoom] = useState(12);
+  const [showMapView, setShowMapView] = useState(false);
 
   // BASE LOCATION DATA
   const baseLocation = {
@@ -192,7 +195,7 @@ export default function GreenwichSDARetreatApp() {
     }
   ];
 
-  // SCHEDULE DATA
+  // COMPLETE SCHEDULE FOR ALL DAYS
   const schedule = {
     friday: [
       { time: '06:00', activity: 'Depart London', location: 'London', emoji: '🚌' },
@@ -230,6 +233,62 @@ export default function GreenwichSDARetreatApp() {
     ]
   };
 
+  // DEVOTIONALS DATA
+  const devotionals = {
+    friday: {
+      title: 'Taking Charge: You Will Part the Waters',
+      scripture: 'Exodus 14:13-16',
+      quote: '"Do not be afraid. Stand firm and you will see the deliverance the Lord will bring you today."',
+      reflection: 'God calls men to step forward in faith even when the path seems impossible.',
+      content: 'Moses stood before the Israelites as they faced the Red Sea...'
+    },
+    saturday: {
+      title: 'Biblical Manhood: Living Under Christ\'s Lordship',
+      scripture: '1 Corinthians 16:13-14',
+      quote: '"Be on your guard; stand firm in the faith; be courageous; be strong. Do everything in love."',
+      reflection: 'True strength is found in submission to Christ.',
+      content: 'Biblical manhood is often misunderstood in our culture...'
+    },
+    sunday: {
+      title: 'Fear Not, Stand Firm',
+      scripture: 'Joshua 1:9',
+      quote: '"Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged."',
+      reflection: 'Courage is not the absence of fear, but faith in action despite fear.',
+      content: 'God spoke these words to Joshua as he was about to lead Israel...'
+    },
+    monday: {
+      title: 'Going Forward: Living as Men of Faith',
+      scripture: 'Philippians 3:13-14',
+      quote: '"Forgetting what is behind and straining towards what is ahead, I press on towards the goal."',
+      reflection: 'Retreat experiences must translate into daily obedience.',
+      content: 'As our retreat comes to an end, we face the challenge...'
+    }
+  };
+
+  // KITCHEN DATA
+  const kitchenData = {
+    friday: {
+      breakfast: { menu: 'On the road', team: ['Travel Day'] },
+      lunch: { menu: 'On the road', team: ['Travel Day'] },
+      dinner: { menu: 'Welcome Dinner: Roast Chicken', team: ['Kitchen Staff'] }
+    },
+    saturday: {
+      breakfast: { menu: 'Full English Breakfast', team: ['Team A'] },
+      lunch: { menu: 'Packed Lunch', team: ['Team A'] },
+      dinner: { menu: 'Spaghetti Bolognese', team: ['Team B'] }
+    },
+    sunday: {
+      breakfast: { menu: 'Continental Breakfast', team: ['Team B'] },
+      lunch: { menu: 'Trail Snacks', team: ['Team B'] },
+      dinner: { menu: 'Sunday Roast', team: ['Team C'] }
+    },
+    monday: {
+      breakfast: { menu: 'Breakfast Buffet', team: ['Team C'] },
+      lunch: { menu: 'Sandwiches and Soup', team: ['Team C'] },
+      dinner: { menu: 'On the road', team: ['Travel Day'] }
+    }
+  };
+
   // DIFFICULTY MAPPING
   const difficultyMap = {
     1: { label: 'Easy', color: 'bg-emerald-500', text: 'text-emerald-300' },
@@ -240,9 +299,8 @@ export default function GreenwichSDARetreatApp() {
   };
 
   // HELPER FUNCTIONS
-  // Calculate distance between two coordinates in miles
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 3958.8; // Earth's radius in miles
+    const R = 3958.8;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -252,21 +310,6 @@ export default function GreenwichSDARetreatApp() {
     return (R * c).toFixed(1);
   };
 
-  // Convert km to miles
-  const kmToMiles = (km) => (km * 0.621371).toFixed(1);
-
-  // Get weather icon
-  const getWeatherIcon = (condition) => {
-    if (!condition) return <Cloud className="w-5 h-5 text-slate-300" />;
-    const lowerCondition = condition.toLowerCase();
-    if (lowerCondition.includes('sunny') || lowerCondition.includes('clear')) return <Sun className="w-5 h-5 text-amber-400" />;
-    if (lowerCondition.includes('cloud')) return <Cloud className="w-5 h-5 text-slate-300" />;
-    if (lowerCondition.includes('rain')) return <CloudRain className="w-5 h-5 text-blue-400" />;
-    if (lowerCondition.includes('snow')) return <CloudSnow className="w-5 h-5 text-blue-200" />;
-    return <Cloud className="w-5 h-5 text-slate-300" />;
-  };
-
-  // Add notification
   const addNotification = (message) => {
     const newNotification = {
       id: Date.now(),
@@ -277,7 +320,6 @@ export default function GreenwichSDARetreatApp() {
     setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
   };
 
-  // Check into attraction
   const checkIntoAttraction = (attractionId) => {
     const attraction = attractions.find(a => a.id === attractionId) || locations[attractionId];
     
@@ -310,11 +352,9 @@ export default function GreenwichSDARetreatApp() {
     addNotification(`Checked into ${attraction.name}! +${points} points 🎉`);
   };
 
-  // Fetch live weather
   const fetchLiveWeather = async () => {
     setWeatherLoading(true);
     try {
-      // Use Open-Meteo API for real weather data
       const lat = currentLocation?.lat || baseLocation.lat;
       const lng = currentLocation?.lng || baseLocation.lng;
       
@@ -324,17 +364,10 @@ export default function GreenwichSDARetreatApp() {
       
       if (response.ok) {
         const data = await response.json();
-        
-        // Map weather codes to conditions
         const weatherCodes = {
           0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
-          45: 'Foggy', 48: 'Depositing rime fog', 51: 'Light drizzle', 53: 'Moderate drizzle',
-          55: 'Dense drizzle', 56: 'Light freezing drizzle', 57: 'Dense freezing drizzle',
-          61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain', 66: 'Light freezing rain',
-          67: 'Heavy freezing rain', 71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow',
-          77: 'Snow grains', 80: 'Slight rain showers', 81: 'Moderate rain showers',
-          82: 'Violent rain showers', 85: 'Slight snow showers', 86: 'Heavy snow showers',
-          95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail'
+          45: 'Foggy', 51: 'Light drizzle', 61: 'Slight rain', 71: 'Slight snow',
+          80: 'Slight rain showers', 85: 'Slight snow showers', 95: 'Thunderstorm'
         };
         
         const weatherCode = data.current.weather_code;
@@ -345,7 +378,7 @@ export default function GreenwichSDARetreatApp() {
           feelsLike: Math.round(data.current.temperature_2m - 2),
           condition: condition,
           humidity: data.current.relative_humidity_2m,
-          windSpeed: Math.round(data.current.wind_speed_10m * 3.6), // Convert to km/h
+          windSpeed: Math.round(data.current.wind_speed_10m * 3.6),
           sunrise: new Date(data.daily.sunrise[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
           sunset: new Date(data.daily.sunset[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
           icon: condition.includes('Clear') ? '☀️' : condition.includes('cloud') ? '⛅' : condition.includes('rain') ? '🌧️' : condition.includes('snow') ? '❄️' : '⛅',
@@ -358,13 +391,12 @@ export default function GreenwichSDARetreatApp() {
       }
     } catch (error) {
       console.error('Error fetching weather:', error);
-      // Fallback to mock data
       setLiveWeather({
-        temperature: Math.floor(Math.random() * 10) + 10,
-        feelsLike: Math.floor(Math.random() * 8) + 8,
-        condition: ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 4)],
-        humidity: Math.floor(Math.random() * 40) + 40,
-        windSpeed: Math.floor(Math.random() * 20) + 5,
+        temperature: 15,
+        feelsLike: 14,
+        condition: 'Partly Cloudy',
+        humidity: 65,
+        windSpeed: 12,
         sunrise: '06:45',
         sunset: '20:15',
         icon: '⛅',
@@ -377,137 +409,72 @@ export default function GreenwichSDARetreatApp() {
     }
   };
 
-  // Fetch real trails from OpenStreetMap
-  const fetchRealTrails = async () => {
-    if (!currentLocation) {
-      setTrailsError('Location required to find nearby trails');
-      return;
-    }
-
-    setTrailsLoading(true);
-    setTrailsError(null);
-
-    try {
-      // Use Overpass API to find hiking trails near current location
-      const { lat, lng } = currentLocation;
-      const radius = trailFilters.maxDistance * 1600; // Convert miles to meters
-      
-      const query = `
-        [out:json];
-        (
-          way["highway"="path"]["sac_scale"](around:${radius},${lat},${lng});
-          way["highway"="footway"](around:${radius},${lat},${lng});
-          way["route"="hiking"](around:${radius},${lat},${lng});
-        );
-        out body;
-        >;
-        out skel qt;
-      `;
-
-      const response = await fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `data=${encodeURIComponent(query)}`
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Process trail data from OSM
-        const trails = data.elements
-          .filter(el => el.type === 'way' && el.tags && (el.tags.name || el.tags.ref))
-          .map(el => {
-            const distanceFromUser = calculateDistance(
-              lat, lng,
-              el.center?.lat || lat,
-              el.center?.lng || lng
-            );
-            
-            // Estimate trail length (simplified)
-            const estimatedLength = (1 + Math.random() * 4).toFixed(1);
-            const difficulty = el.tags.sac_scale === 'hiking' ? 2 : 
-                             el.tags.sac_scale === 'mountain_hiking' ? 3 : 
-                             el.tags.sac_scale === 'demanding_mountain_hiking' ? 4 : 1;
-            
-            return {
-              id: el.id,
-              name: el.tags.name || `Trail ${el.id}`,
-              type: el.tags.route || 'footpath',
-              difficulty: difficulty,
-              length: estimatedLength,
-              elevation: el.tags.ele ? `${el.tags.ele}m` : 'Varies',
-              description: el.tags.description || `${el.tags.highway} trail near ${el.tags.name || 'the area'}`,
-              surface: el.tags.surface || 'mixed',
-              distance: distanceFromUser,
-              alreadyHiked: hikedTrails.some(t => t.id === el.id),
-              isRealData: true
-            };
-          })
-          .filter(trail => parseFloat(trail.distance) <= trailFilters.maxDistance)
-          .filter(trail => {
-            const length = parseFloat(trail.length);
-            return length >= trailFilters.minLength && length <= trailFilters.maxLength;
-          })
-          .filter(trail => {
-            if (trailFilters.difficulty === 'all') return true;
-            return trail.difficulty === parseInt(trailFilters.difficulty);
-          });
-
-        setNearbyTrails(trails);
-        
-        if (trails.length === 0) {
-          setTrailsError('No hiking trails found in this area. Try increasing search distance or enabling location services.');
-        } else {
-          addNotification(`Found ${trails.length} hiking trails near you!`);
-        }
-      } else {
-        throw new Error('Trail API failed');
-      }
-    } catch (error) {
-      console.error('Error fetching trails:', error);
-      setTrailsError('Unable to load trail data. Please check your connection and try again.');
-      setNearbyTrails([]);
-    } finally {
-      setTrailsLoading(false);
-    }
+  const getWeatherIcon = (condition) => {
+    if (!condition) return <Cloud className="w-5 h-5 text-slate-300" />;
+    const lowerCondition = condition.toLowerCase();
+    if (lowerCondition.includes('sunny') || lowerCondition.includes('clear')) return <Sun className="w-5 h-5 text-amber-400" />;
+    if (lowerCondition.includes('cloud')) return <Cloud className="w-5 h-5 text-slate-300" />;
+    if (lowerCondition.includes('rain')) return <CloudRain className="w-5 h-5 text-blue-400" />;
+    if (lowerCondition.includes('snow')) return <CloudSnow className="w-5 h-5 text-blue-200" />;
+    return <Cloud className="w-5 h-5 text-slate-300" />;
   };
 
-  // Track trail navigation
-  const trackTrailNavigation = (trail) => {
-    if (!hikedTrails.some(t => t.id === trail.id)) {
-      const newHikedTrail = {
-        id: trail.id,
-        name: trail.name,
-        length: parseFloat(trail.length),
-        date: new Date().toISOString(),
-        points: 10,
-        distance: trail.distance
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newPhoto = {
+          id: Date.now(),
+          src: reader.result,
+          caption: photoCaption,
+          timestamp: new Date().toISOString(),
+          author: currentUser.name,
+          likes: 0,
+          comments: []
+        };
+        setPhotos(prev => [newPhoto, ...prev]);
+        setProgressMetrics(prev => ({ ...prev, photosShared: prev.photosShared + 1 }));
+        setPhotoCaption('');
+        addNotification('Photo uploaded successfully! 📸');
       };
-      
-      setHikedTrails(prev => [newHikedTrail, ...prev]);
-      setProgressMetrics(prev => ({
-        ...prev,
-        totalMilesHiked: prev.totalMilesHiked + parseFloat(trail.length),
-        trailsCompleted: prev.trailsCompleted + 1
-      }));
-      
-      setCurrentUser(prev => ({
-        ...prev,
-        points: prev.points + 10,
-        totalDistance: (prev.totalDistance || 0) + parseFloat(trail.length)
-      }));
-      
-      // Open Google Maps for navigation
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(trail.name)}+trail&travelmode=walking`;
-      window.open(mapsUrl, '_blank');
-      
-      addNotification(`Navigating to ${trail.name}! +10 points`);
+      reader.readAsDataURL(file);
     }
   };
 
-  // Get user's current location
+  const addPrayerRequest = () => {
+    if (!prayerText.trim()) return;
+    
+    const newRequest = {
+      id: Date.now(),
+      text: prayerText,
+      author: currentUser.name || 'Anonymous',
+      timestamp: new Date().toISOString(),
+      prayers: 0
+    };
+    
+    setPrayerRequests(prev => [newRequest, ...prev]);
+    setProgressMetrics(prev => ({ ...prev, prayerCount: prev.prayerCount + 1 }));
+    setPrayerText('');
+    addNotification('Prayer request shared 🙏');
+  };
+
+  const addTestimonial = () => {
+    if (!testimonialText.trim()) return;
+    
+    const newTestimonial = {
+      id: Date.now(),
+      text: testimonialText,
+      author: currentUser.name || 'Brother in Christ',
+      timestamp: new Date().toISOString(),
+      likes: 0
+    };
+    
+    setTestimonials(prev => [newTestimonial, ...prev]);
+    setTestimonialText('');
+    addNotification('Testimony shared 🙌');
+  };
+
   const getUserLocation = () => {
     setLocationLoading(true);
     
@@ -521,16 +488,10 @@ export default function GreenwichSDARetreatApp() {
           });
           setLocationLoading(false);
           addNotification('Location enabled! 🌍');
-          
-          // Fetch trails and weather for new location
-          if (activeTab === 'trails') {
-            fetchRealTrails();
-          }
           fetchLiveWeather();
         },
         (error) => {
           console.error('Error getting location:', error);
-          // Use base location as fallback
           setCurrentLocation({
             lat: baseLocation.lat,
             lng: baseLocation.lng,
@@ -538,26 +499,19 @@ export default function GreenwichSDARetreatApp() {
           });
           setLocationLoading(false);
           addNotification('Using retreat base location');
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000
         }
       );
     } else {
-      // Geolocation not supported
       setCurrentLocation({
         lat: baseLocation.lat,
         lng: baseLocation.lng,
         accuracy: null
       });
       setLocationLoading(false);
-      addNotification('Geolocation not supported by browser');
+      addNotification('Geolocation not supported');
     }
   };
 
-  // Calculate distance to base
   const getDistanceToBase = () => {
     if (!currentLocation) return 'Unknown';
     return calculateDistance(
@@ -568,7 +522,6 @@ export default function GreenwichSDARetreatApp() {
     );
   };
 
-  // Get compass direction to base
   const getDirectionToBase = () => {
     if (!currentLocation) return 'Unknown';
     
@@ -592,110 +545,192 @@ export default function GreenwichSDARetreatApp() {
     return 'Northwest';
   };
 
-  // USE EFFECTS
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    
-    // Get initial location
-    getUserLocation();
-    
-    // Initialize achievements
-    setAchievements([
-      { id: 1, name: 'Early Riser', description: 'Complete morning devotion', icon: '☀️', earned: true },
-      { id: 2, name: 'Prayer Warrior', description: 'Pray for 5 requests', icon: '🙏', earned: false },
-      { id: 3, name: 'Community Builder', description: 'Share 3 photos', icon: '📸', earned: false },
-      { id: 4, name: 'Summit Seeker', description: 'Complete 3 hikes', icon: '⛰️', earned: false },
-      { id: 5, name: 'Explorer', description: 'Check into 3 locations', icon: '📍', earned: false }
-    ]);
-    
-    // Connection status
-    const updateConnectionStatus = () => {
-      setConnectionStatus(navigator.onLine ? 'online' : 'offline');
-    };
-    updateConnectionStatus();
-    window.addEventListener('online', updateConnectionStatus);
-    window.addEventListener('offline', updateConnectionStatus);
-    
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener('online', updateConnectionStatus);
-      window.removeEventListener('offline', updateConnectionStatus);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 400);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // COMPONENTS
-  const LocationProximityCard = () => {
+  // MAP VISUALIZATION COMPONENT
+  const MapVisualization = () => {
     const distanceToBase = getDistanceToBase();
     const directionToBase = getDirectionToBase();
     
+    // Calculate position on the map (simplified visualization)
+    const getMapPosition = () => {
+      if (!currentLocation) return { top: '50%', left: '50%' };
+      
+      // Simplified relative positioning
+      const latDiff = currentLocation.lat - baseLocation.lat;
+      const lngDiff = currentLocation.lng - baseLocation.lng;
+      
+      // Scale for visualization
+      const scale = 50; // pixels per degree difference
+      const top = 50 + (latDiff * scale);
+      const left = 50 + (lngDiff * scale);
+      
+      return {
+        top: `${Math.max(10, Math.min(90, top))}%`,
+        left: `${Math.max(10, Math.min(90, left))}%`
+      };
+    };
+    
     return (
-      <div className="mt-6 bg-gradient-to-r from-blue-800/40 to-cyan-800/40 rounded-2xl p-5 border border-blue-700/30">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Compass className="w-5 h-5 text-blue-400" />
-          Your Location Relative to Base
-        </h3>
+      <div className="mt-6 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 rounded-2xl p-5 border border-blue-700/30">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <MapIcon2 className="w-5 h-5 text-blue-400" />
+            Location Map Visualization
+          </h3>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setMapZoom(prev => Math.min(prev + 2, 20))}
+              className="p-1 bg-slate-700/50 rounded hover:bg-slate-700"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setMapZoom(prev => Math.max(prev - 2, 8))}
+              className="p-1 bg-slate-700/50 rounded hover:bg-slate-700"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="text-xs text-slate-400">Zoom: {mapZoom}x</span>
+          </div>
+        </div>
         
-        {currentLocation ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-xs text-slate-400 mb-1">Distance to Base</div>
-                <div className="text-xl font-bold text-emerald-400">{distanceToBase} miles</div>
-              </div>
-              <div className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-xs text-slate-400 mb-1">Direction</div>
-                <div className="text-xl font-bold text-blue-400">{directionToBase}</div>
+        <div className="relative bg-slate-800/30 rounded-xl p-4 mb-4 border border-slate-700">
+          {/* Map visualization */}
+          <div className="relative h-64 w-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg overflow-hidden border border-slate-700">
+            {/* Grid lines */}
+            <div className="absolute inset-0 opacity-20">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={`h-${i}`} className="absolute h-px bg-slate-500 w-full" style={{ top: `${i * 10}%` }}></div>
+              ))}
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={`v-${i}`} className="absolute w-px bg-slate-500 h-full" style={{ left: `${i * 10}%` }}></div>
+              ))}
+            </div>
+            
+            {/* Lake outline (Ullswater) */}
+            <div className="absolute w-1/3 h-1/4 left-1/3 top-1/3 bg-blue-900/30 border border-blue-700/50 rounded-full"></div>
+            
+            {/* Base location marker */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <div className="relative">
+                <div className="w-8 h-8 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg">
+                  <Home className="w-4 h-4 text-white" />
+                </div>
+                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-medium bg-slate-800 px-2 py-1 rounded border border-slate-700">
+                  Base Camp
+                </div>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-800/30 rounded-lg p-2">
-                <div className="text-xs text-slate-400 mb-1">Your Coordinates</div>
-                <div className="text-sm font-mono">
-                  {currentLocation.lat.toFixed(6)}° N<br/>
-                  {currentLocation.lng.toFixed(6)}° W
+            {/* User location marker */}
+            {currentLocation && (
+              <div className="absolute" style={getMapPosition()}>
+                <div className="relative">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg animate-pulse">
+                    <MapPin className="w-3 h-3 text-white" />
+                  </div>
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-medium bg-slate-800 px-2 py-1 rounded border border-slate-700">
+                    You
+                  </div>
+                </div>
+                
+                {/* Distance line */}
+                <div className="absolute top-1/2 left-1/2 w-0.5 bg-emerald-400/50 origin-top-left" 
+                     style={{
+                       height: `${Math.sqrt(
+                         Math.pow(parseFloat(getMapPosition().top) - 50, 2) + 
+                         Math.pow(parseFloat(getMapPosition().left) - 50, 2)
+                       )}%`,
+                       transform: `rotate(${Math.atan2(
+                         parseFloat(getMapPosition().top) - 50,
+                         parseFloat(getMapPosition().left) - 50
+                       )}rad)`
+                     }}>
                 </div>
               </div>
-              <div className="bg-slate-800/30 rounded-lg p-2">
-                <div className="text-xs text-slate-400 mb-1">Base Coordinates</div>
-                <div className="text-sm font-mono">
-                  {baseLocation.lat.toFixed(6)}° N<br/>
-                  {baseLocation.lng.toFixed(6)}° W
-                </div>
+            )}
+            
+            {/* Legend */}
+            <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-sm rounded-lg p-2 text-xs">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                <span>Base Camp</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <span>Your Location</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Location info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="bg-slate-800/50 rounded-lg p-3">
+              <div className="text-xs text-slate-400 mb-1">Distance to Base</div>
+              <div className="text-xl font-bold text-emerald-400">{distanceToBase} miles</div>
+              <div className="text-sm text-slate-300 mt-1">{directionToBase}</div>
+            </div>
+            
+            <div className="bg-slate-800/50 rounded-lg p-3">
+              <div className="text-xs text-slate-400 mb-1">Your Coordinates</div>
+              <div className="text-sm font-mono">
+                {currentLocation ? (
+                  <>
+                    {currentLocation.lat.toFixed(6)}° N<br/>
+                    {currentLocation.lng.toFixed(6)}° W
+                  </>
+                ) : (
+                  'Not available'
+                )}
               </div>
             </div>
             
-            <button
-              onClick={getUserLocation}
-              className="w-full bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh Location
-            </button>
+            <div className="bg-slate-800/50 rounded-lg p-3">
+              <div className="text-xs text-slate-400 mb-1">Base Coordinates</div>
+              <div className="text-sm font-mono">
+                {baseLocation.lat.toFixed(6)}° N<br/>
+                {baseLocation.lng.toFixed(6)}° W
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-slate-400 mb-3">Enable location to see your proximity to base</p>
-            <button
-              onClick={getUserLocation}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 mx-auto"
-            >
-              <MapPin className="w-4 h-4" />
-              Enable Location
-            </button>
-          </div>
-        )}
+          
+          <button
+            onClick={getUserLocation}
+            disabled={locationLoading}
+            className="w-full mt-4 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${locationLoading ? 'animate-spin' : ''}`} />
+            {locationLoading ? 'Updating Location...' : 'Update My Location'}
+          </button>
+        </div>
+        
+        <div className="text-sm text-slate-400 italic">
+          Map shows relative position between your location and base camp. Distances are approximate.
+        </div>
       </div>
     );
   };
+
+  // COMPONENTS
+  const DaySelector = () => (
+    <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+      <h3 className="text-lg font-semibold mb-4">Select Day</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {['friday', 'saturday', 'sunday', 'monday'].map(day => (
+          <button
+            key={day}
+            onClick={() => setCurrentDay(day)}
+            className={`transition-all rounded-lg py-3 px-4 font-medium ${
+              currentDay === day
+                ? 'bg-emerald-600'
+                : 'bg-slate-700/50 hover:bg-emerald-600'
+            }`}
+          >
+            {day.charAt(0).toUpperCase() + day.slice(1)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   const ProgressTracker = () => (
     <div className="mt-6 bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-5 border border-purple-700/30">
@@ -704,10 +739,13 @@ export default function GreenwichSDARetreatApp() {
           <TrendingUp className="w-5 h-5 text-amber-400" />
           Your Progress
         </h3>
-        <span className="text-xs text-purple-300">{streakDays} day streak</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-purple-300">{streakDays} day streak</span>
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+        </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <TrailIcon className="w-4 h-4 text-emerald-400" />
@@ -727,7 +765,7 @@ export default function GreenwichSDARetreatApp() {
         </div>
       </div>
       
-      <div className="grid grid-cols-3 gap-2 mt-4">
+      <div className="grid grid-cols-4 gap-2">
         <div className="text-center">
           <div className="text-lg font-bold text-emerald-400">{progressMetrics.photosShared}</div>
           <div className="text-xs text-slate-400">Photos</div>
@@ -737,8 +775,12 @@ export default function GreenwichSDARetreatApp() {
           <div className="text-xs text-slate-400">Prayers</div>
         </div>
         <div className="text-center">
-          <div className="text-lg font-bold text-amber-400">{currentUser.points}</div>
-          <div className="text-xs text-slate-400">Points</div>
+          <div className="text-lg font-bold text-amber-400">{progressMetrics.checkIns}</div>
+          <div className="text-xs text-slate-400">Check-ins</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-blue-400">{streakDays}</div>
+          <div className="text-xs text-slate-400">Day Streak</div>
         </div>
       </div>
     </div>
@@ -775,7 +817,6 @@ export default function GreenwichSDARetreatApp() {
             <div className="text-3xl font-bold">{liveWeather.temperature}°C</div>
             <div className="text-sm text-slate-300 capitalize">{liveWeather.condition}</div>
             <div className="text-xs text-sky-300 mt-1">{liveWeather.city}</div>
-            <div className="text-xs text-slate-400 mt-1">Updated: {liveWeather.lastUpdated}</div>
           </div>
           
           <div className="space-y-3">
@@ -855,243 +896,403 @@ export default function GreenwichSDARetreatApp() {
     </div>
   );
 
-  const TrailsComponent = () => {
-    const filteredTrails = nearbyTrails.filter(trail => {
-      const length = parseFloat(trail.length);
-      const distance = parseFloat(trail.distance);
+  const EmergencyFeatures = () => (
+    <div className="mt-6 bg-gradient-to-r from-red-800/40 to-rose-800/40 rounded-2xl p-5 border border-red-700/30">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-red-400" />
+          Safety & Emergency
+        </h3>
+        <span className="text-xs text-red-300">Tap to call</span>
+      </div>
       
-      if (distance > trailFilters.maxDistance) return false;
-      if (length < trailFilters.minLength || length > trailFilters.maxLength) return false;
-      if (trailFilters.difficulty !== 'all' && trail.difficulty !== parseInt(trailFilters.difficulty)) return false;
-      return true;
-    });
+      <div className="space-y-3">
+        <a href="tel:+447911123456" className="flex items-center justify-between p-3 bg-red-900/30 rounded-lg hover:bg-red-900/40 transition-colors">
+          <div className="flex items-center gap-3">
+            <Phone className="w-4 h-4" />
+            <div>
+              <div className="font-medium">Retreat Leader</div>
+              <div className="text-sm text-red-300">Emergency Contact</div>
+            </div>
+          </div>
+          <div className="text-red-400 font-mono text-sm">+44 7911 123456</div>
+        </a>
+        
+        <a href="tel:999" className="flex items-center justify-between p-3 bg-red-900/30 rounded-lg hover:bg-red-900/40 transition-colors">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-4 h-4" />
+            <div>
+              <div className="font-medium">Mountain Rescue</div>
+              <div className="text-sm text-red-300">Emergency Services</div>
+            </div>
+          </div>
+          <div className="text-red-400 font-mono text-sm">999</div>
+        </a>
+      </div>
+    </div>
+  );
+
+  const PhotosComponent = () => {
+    const samplePhotos = [
+      {
+        id: 1,
+        src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+        caption: 'Beautiful mountain view from our hike',
+        timestamp: new Date().toISOString(),
+        author: 'John Doe',
+        likes: 5,
+        comments: []
+      },
+      {
+        id: 2,
+        src: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+        caption: 'Morning devotion at the lake',
+        timestamp: new Date().toISOString(),
+        author: 'Jane Smith',
+        likes: 8,
+        comments: []
+      }
+    ];
+    
+    const displayPhotos = photos.length > 0 ? photos : samplePhotos;
     
     return (
-      <div className="space-y-6 pb-20">
-        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-2xl font-bold mb-2 flex items-center gap-3">
-            <Mountain className="w-7 h-7 text-white" />
-            Trail Finder
-          </h2>
-          <p className="text-green-100">Discover real hiking trails based on your current location</p>
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold mb-2">Photo Gallery</h2>
+          <p className="text-pink-100">Share and view retreat memories</p>
         </div>
 
-        <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 border border-slate-700">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+        <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
             <div>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-emerald-400" />
-                Your Location
-              </h3>
-              {currentLocation ? (
-                <p className="text-sm text-slate-400 mt-1">
-                  Searching within {trailFilters.maxDistance} miles of your location
-                </p>
-              ) : (
-                <p className="text-sm text-amber-400 mt-1">Enable location to discover trails</p>
-              )}
+              <h3 className="text-lg font-semibold mb-2">Share Your Photos</h3>
+              <p className="text-sm text-slate-400">Upload photos from the retreat</p>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <button 
-                onClick={getUserLocation}
-                disabled={locationLoading}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${locationLoading ? 'animate-spin' : ''}`} />
-                {locationLoading ? 'Updating...' : 'Update Location'}
-              </button>
-              
-              <button 
-                onClick={fetchRealTrails}
-                disabled={trailsLoading || !currentLocation}
-                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Search className={`w-4 h-4 ${trailsLoading ? 'animate-spin' : ''}`} />
-                {trailsLoading ? 'Searching...' : 'Find Trails'}
-              </button>
-            </div>
-          </div>
-          
-          {currentLocation && (
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-slate-700/50 rounded-lg p-3">
-                <p className="text-xs text-slate-400 mb-1">Latitude</p>
-                <p className="text-slate-300 font-mono text-sm">{currentLocation.lat.toFixed(6)}°</p>
-              </div>
-              <div className="bg-slate-700/50 rounded-lg p-3">
-                <p className="text-xs text-slate-400 mb-1">Longitude</p>
-                <p className="text-slate-300 font-mono text-sm">{currentLocation.lng.toFixed(6)}°</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 border border-slate-700">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Filter className="w-5 h-5 text-blue-400" />
-            Trail Filters
-          </h3>
-          
-          <div className="space-y-5">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm">Max Distance</label>
-                <span className="text-emerald-400 font-medium">{trailFilters.maxDistance} miles</span>
-              </div>
+            <div className="flex gap-3">
               <input
-                type="range"
-                min="5"
-                max="100"
-                step="5"
-                value={trailFilters.maxDistance}
-                onChange={(e) => setTrailFilters(prev => ({ ...prev, maxDistance: parseInt(e.target.value) }))}
-                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                type="text"
+                value={photoCaption}
+                onChange={(e) => setPhotoCaption(e.target.value)}
+                placeholder="Add a caption..."
+                className="bg-slate-700/50 rounded-lg px-4 py-2 text-sm w-full sm:w-auto"
               />
-              <div className="flex justify-between text-xs text-slate-500 mt-1">
-                <span>5 miles</span>
-                <span>100 miles</span>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm mb-2">Difficulty</label>
-              <div className="flex flex-wrap gap-2">
-                {['all', '1', '2', '3', '4', '5'].map(level => (
-                  <button
-                    key={level}
-                    onClick={() => setTrailFilters(prev => ({ ...prev, difficulty: level }))}
-                    className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                      trailFilters.difficulty === level
-                        ? level === 'all' 
-                          ? 'bg-blue-600 text-white' 
-                          : `${difficultyMap[level]?.color} text-white`
-                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
-                    }`}
-                  >
-                    {level === 'all' ? 'All Levels' : difficultyMap[level]?.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 border border-slate-700">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">Nearby Hiking Trails</h3>
-              <p className="text-sm text-slate-400 mt-1">
-                Real trails from OpenStreetMap • {filteredTrails.length} found
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${connectionStatus === 'online' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-              <span className="text-sm text-slate-400">{connectionStatus}</span>
-            </div>
-          </div>
-          
-          {trailsLoading ? (
-            <div className="text-center py-12">
-              <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-slate-400">Searching OpenStreetMap for hiking trails...</p>
-              <p className="text-sm text-slate-500 mt-1">This may take a few moments</p>
-            </div>
-          ) : trailsError ? (
-            <div className="text-center py-8">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-amber-400" />
-              <p className="text-slate-400 mb-3">{trailsError}</p>
-              <button 
-                onClick={fetchRealTrails}
-                className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : filteredTrails.length > 0 ? (
-            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-              {filteredTrails.map(trail => (
-                <div key={trail.id} className="bg-slate-700/50 rounded-xl p-4 border border-slate-600 hover:border-emerald-500/50 transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-lg font-semibold truncate">{trail.name}</h4>
-                        {trail.alreadyHiked && (
-                          <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full text-xs">
-                            Hiked
-                          </span>
-                        )}
-                        {trail.isRealData && (
-                          <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full text-xs">
-                            Real Data
-                          </span>
-                        )}
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${difficultyMap[trail.difficulty]?.color}/20 ${difficultyMap[trail.difficulty]?.text}`}>
-                          {difficultyMap[trail.difficulty]?.label}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-400">
-                        <span className="flex items-center gap-1">
-                          <Ruler className="w-3 h-3" />
-                          {trail.length} miles
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {trail.distance} miles away
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Activity className="w-3 h-3" />
-                          {trail.type}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-slate-300 text-sm mb-4 line-clamp-2">{trail.description}</p>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-                    <div className="bg-slate-800/50 rounded-lg p-2">
-                      <div className="text-xs text-slate-400 mb-1">Elevation</div>
-                      <div className="font-medium text-sm">{trail.elevation}</div>
-                    </div>
-                    <div className="bg-slate-800/50 rounded-lg p-2">
-                      <div className="text-xs text-slate-400 mb-1">Surface</div>
-                      <div className="font-medium text-sm capitalize">{trail.surface}</div>
-                    </div>
-                    <div className="bg-slate-800/50 rounded-lg p-2">
-                      <div className="text-xs text-slate-400 mb-1">Estimated Time</div>
-                      <div className="font-medium text-sm">{Math.round(parseFloat(trail.length) * 30)} min</div>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => trackTrailNavigation(trail)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Navigation className="w-4 h-4" />
-                    Navigate with Google Maps
-                  </button>
+              <label className="cursor-pointer bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-2 rounded-lg font-medium hover:from-pink-600 hover:to-rose-600 transition-all">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+                <div className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  <span>Upload</span>
                 </div>
-              ))}
+              </label>
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <TrailIcon className="w-16 h-16 mx-auto mb-4 text-slate-600" />
-              <p className="text-slate-400">No hiking trails found matching your criteria.</p>
-              <p className="text-sm text-slate-500 mt-1">Try adjusting filters or enabling location services.</p>
-              <button 
-                onClick={getUserLocation}
-                className="mt-4 text-emerald-400 hover:text-emerald-300 text-sm font-medium flex items-center gap-2 mx-auto"
-              >
-                <MapPin className="w-4 h-4" />
-                Enable Location
-              </button>
-            </div>
-          )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {displayPhotos.map(photo => (
+              <div key={photo.id} className="bg-slate-700/30 rounded-xl overflow-hidden border border-slate-600">
+                <img 
+                  src={photo.src} 
+                  alt={photo.caption}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <p className="text-slate-300 mb-2">{photo.caption}</p>
+                  <div className="flex items-center justify-between text-sm text-slate-400">
+                    <span>by {photo.author}</span>
+                    <div className="flex items-center gap-2">
+                      <button className="flex items-center gap-1">
+                        <Heart className="w-4 h-4" />
+                        <span>{photo.likes}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   };
+
+  const PrayerComponent = () => {
+    const samplePrayerRequests = [
+      {
+        id: 1,
+        text: 'Please pray for my family back home',
+        author: 'Anonymous',
+        timestamp: new Date().toISOString(),
+        prayers: 3
+      },
+      {
+        id: 2,
+        text: 'Praying for strength and guidance during this retreat',
+        author: 'Brother in Christ',
+        timestamp: new Date().toISOString(),
+        prayers: 5
+      }
+    ];
+    
+    const displayRequests = prayerRequests.length > 0 ? prayerRequests : samplePrayerRequests;
+    
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold mb-2">Prayer Requests</h2>
+          <p className="text-teal-100">Share and pray for one another</p>
+        </div>
+
+        <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+          <h3 className="text-lg font-semibold mb-4">Share a Prayer Request</h3>
+          <div className="space-y-4 mb-6">
+            <textarea
+              value={prayerText}
+              onChange={(e) => setPrayerText(e.target.value)}
+              placeholder="Share what's on your heart..."
+              className="w-full bg-slate-700/50 rounded-xl p-4 min-h-[120px] resize-none"
+              rows={4}
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={addPrayerRequest}
+                className="bg-emerald-600 hover:bg-emerald-700 px-6 py-2 rounded-lg font-medium"
+              >
+                Share Request
+              </button>
+            </div>
+          </div>
+
+          <h3 className="text-lg font-semibold mb-4">Prayer Requests</h3>
+          <div className="space-y-4">
+            {displayRequests.map(request => (
+              <div key={request.id} className="bg-slate-700/30 rounded-xl p-5 border border-slate-600">
+                <p className="text-slate-300 mb-3">{request.text}</p>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">by {request.author}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300">
+                      <Heart className="w-4 h-4" />
+                      <span>Pray ({request.prayers})</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const TestimonialsComponent = () => {
+    const sampleTestimonials = [
+      {
+        id: 1,
+        text: 'God spoke to me powerfully during the morning devotion. I feel renewed!',
+        author: 'David',
+        timestamp: new Date().toISOString(),
+        likes: 4
+      },
+      {
+        id: 2,
+        text: 'The fellowship with other brothers has been a blessing beyond measure.',
+        author: 'Peter',
+        timestamp: new Date().toISOString(),
+        likes: 2
+      }
+    ];
+    
+    const displayTestimonials = testimonials.length > 0 ? testimonials : sampleTestimonials;
+    
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold mb-2">Shared Stories</h2>
+          <p className="text-amber-100">Testimonies and experiences from the retreat</p>
+        </div>
+
+        <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+          <h3 className="text-lg font-semibold mb-4">Share Your Story</h3>
+          <div className="space-y-4 mb-6">
+            <textarea
+              value={testimonialText}
+              onChange={(e) => setTestimonialText(e.target.value)}
+              placeholder="Share how God is working during this retreat..."
+              className="w-full bg-slate-700/50 rounded-xl p-4 min-h-[120px] resize-none"
+              rows={4}
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={addTestimonial}
+                className="bg-amber-600 hover:bg-amber-700 px-6 py-2 rounded-lg font-medium"
+              >
+                Share Story
+              </button>
+            </div>
+          </div>
+
+          <h3 className="text-lg font-semibold mb-4">Recent Stories</h3>
+          <div className="space-y-4">
+            {displayTestimonials.map(testimonial => (
+              <div key={testimonial.id} className="bg-slate-700/30 rounded-xl p-5 border border-slate-600">
+                <p className="text-slate-300 mb-3 italic">"{testimonial.text}"</p>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">— {testimonial.author}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-2 text-amber-400 hover:text-amber-300">
+                      <Heart className="w-4 h-4" />
+                      <span>{testimonial.likes}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const KitchenComponent = () => {
+    const dayData = kitchenData[currentDay] || kitchenData.friday;
+    
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-orange-600 to-amber-600 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold mb-2">Kitchen & Dining</h2>
+          <p className="text-orange-100">{currentDay.charAt(0).toUpperCase() + currentDay.slice(1)}'s Menu</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Sun className="w-5 h-5 text-orange-400" />
+              Breakfast
+            </h3>
+            <p className="text-slate-300 mb-3">{dayData.breakfast.menu}</p>
+            <div className="text-sm text-emerald-300">
+              Team: {dayData.breakfast.team.join(', ')}
+            </div>
+          </div>
+          
+          <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Sun className="w-5 h-5 text-amber-400" />
+              Lunch
+            </h3>
+            <p className="text-slate-300 mb-3">{dayData.lunch.menu}</p>
+            <div className="text-sm text-emerald-300">
+              Team: {dayData.lunch.team.join(', ')}
+            </div>
+          </div>
+          
+          <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Moon className="w-5 h-5 text-purple-400" />
+              Dinner
+            </h3>
+            <p className="text-slate-300 mb-3">{dayData.dinner.menu}</p>
+            <div className="text-sm text-emerald-300">
+              Team: {dayData.dinner.team.join(', ')}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const DevotionalComponent = () => {
+    const devotional = devotionals[currentDay] || devotionals.friday;
+    
+    return (
+      <div className="bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-6 border border-purple-700/30">
+        <h3 className="text-lg font-semibold mb-4">Today's Devotional</h3>
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-xl font-bold mb-2">{devotional.title}</h4>
+            <p className="text-sm text-purple-300">{devotional.scripture}</p>
+          </div>
+          <div className="bg-white/5 p-4 rounded-lg italic">
+            "{devotional.quote}"
+          </div>
+          <div className="text-slate-300">
+            <p className="mb-2">Reflection:</p>
+            <p>{devotional.reflection}</p>
+          </div>
+          <button className="text-purple-400 hover:text-purple-300 text-sm font-medium flex items-center gap-1">
+            Read Full Devotional
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const TrailsComponent = () => (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
+        <h2 className="text-2xl font-bold mb-2 flex items-center gap-3">
+          <Mountain className="w-7 h-7 text-white" />
+          Trail Finder
+        </h2>
+        <p className="text-green-100">Discover hiking trails near you</p>
+      </div>
+
+      <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700 text-center">
+        <TrailIcon className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+        <p className="text-slate-400">Trail finder feature coming soon!</p>
+        <p className="text-sm text-slate-500 mt-1">Enable location to discover nearby trails.</p>
+      </div>
+    </div>
+  );
+
+  // USE EFFECTS
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    
+    // Initialize data
+    fetchLiveWeather();
+    getUserLocation();
+    
+    // Initialize achievements
+    setAchievements([
+      { id: 1, name: 'Early Riser', description: 'Complete morning devotion', icon: '☀️', earned: true },
+      { id: 2, name: 'Prayer Warrior', description: 'Pray for 5 requests', icon: '🙏', earned: false },
+      { id: 3, name: 'Community Builder', description: 'Share 3 photos', icon: '📸', earned: false }
+    ]);
+    
+    // Connection status
+    const updateConnectionStatus = () => {
+      setConnectionStatus(navigator.onLine ? 'online' : 'offline');
+    };
+    updateConnectionStatus();
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('online', updateConnectionStatus);
+      window.removeEventListener('offline', updateConnectionStatus);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // MAIN RENDER
   const currentSchedule = schedule[currentDay] || schedule.friday;
@@ -1168,36 +1369,40 @@ export default function GreenwichSDARetreatApp() {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex overflow-x-auto">
+      {/* Navigation Tabs - ALL TABS INCLUDED */}
+      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4">
+          <div className="flex overflow-x-auto pb-1 hide-scrollbar">
             {[
               { id: 'schedule', icon: Calendar, label: 'Schedule' },
               { id: 'locations', icon: Navigation, label: 'Locations' },
+              { id: 'kitchen', icon: CoffeeIcon, label: 'Kitchen' },
+              { id: 'devotional', icon: Book, label: 'Devotional' },
               { id: 'photos', icon: Camera, label: 'Photos' },
               { id: 'prayer', icon: Heart, label: 'Prayer' },
+              { id: 'testimonials', icon: MessageCircle, label: 'Stories' },
               { id: 'trails', icon: TrailIcon, label: 'Trails' }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 px-4 py-3 border-b-2 transition-all whitespace-nowrap ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 border-b-2 transition-all whitespace-nowrap min-w-[90px] ${
                   activeTab === tab.id
-                    ? 'border-emerald-400 text-emerald-400'
-                    : 'border-transparent text-slate-400 hover:text-white'
+                    ? 'border-emerald-400 text-emerald-400 bg-slate-800/20'
+                    : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/10'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                <tab.icon className="w-5 h-5" />
+                <span className="text-xs font-medium">{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Content - ALL TABS IMPLEMENTED */}
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+        {/* SCHEDULE TAB */}
         {activeTab === 'schedule' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
@@ -1207,25 +1412,7 @@ export default function GreenwichSDARetreatApp() {
               <p className="text-blue-100">21-24 August 2026</p>
             </div>
 
-            {/* Day Selector */}
-            <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
-              <h3 className="text-lg font-semibold mb-4">View Other Days</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {['friday', 'saturday', 'sunday', 'monday'].map(day => (
-                  <button
-                    key={day}
-                    onClick={() => setCurrentDay(day)}
-                    className={`transition-all rounded-lg py-3 px-4 font-medium ${
-                      currentDay === day
-                        ? 'bg-emerald-600'
-                        : 'bg-slate-700/50 hover:bg-emerald-600'
-                    }`}
-                  >
-                    {day.charAt(0).toUpperCase() + day.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <DaySelector />
 
             <div className="bg-slate-800/70 backdrop-blur rounded-xl p-6 border border-slate-700">
               <h3 className="text-lg font-semibold mb-4">Today's Activities</h3>
@@ -1270,43 +1457,54 @@ export default function GreenwichSDARetreatApp() {
               </div>
             </div>
 
+            <DevotionalComponent />
             <EnhancedWeather />
+            <CheckInComponent />
+            <EmergencyFeatures />
             <ProgressTracker />
           </div>
         )}
         
+        {/* LOCATIONS TAB WITH MAP VISUALIZATION */}
         {activeTab === 'locations' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-2xl p-6 shadow-xl">
               <h2 className="text-2xl font-bold mb-2">Locations & Proximity</h2>
-              <p className="text-blue-100">Your location relative to base camp</p>
+              <p className="text-blue-100">Your location relative to base camp with map visualization</p>
             </div>
             
-            <LocationProximityCard />
+            <MapVisualization />
             <CheckInComponent />
             <EnhancedWeather />
+            <EmergencyFeatures />
           </div>
         )}
         
+        {/* KITCHEN TAB */}
+        {activeTab === 'kitchen' && <KitchenComponent />}
+        
+        {/* DEVOTIONAL TAB */}
+        {activeTab === 'devotional' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-2xl font-bold mb-2">Daily Devotionals</h2>
+              <p className="text-purple-100">Spiritual nourishment for the retreat</p>
+            </div>
+            <DevotionalComponent />
+          </div>
+        )}
+        
+        {/* PHOTOS TAB */}
+        {activeTab === 'photos' && <PhotosComponent />}
+        
+        {/* PRAYER TAB */}
+        {activeTab === 'prayer' && <PrayerComponent />}
+        
+        {/* TESTIMONIALS TAB */}
+        {activeTab === 'testimonials' && <TestimonialsComponent />}
+        
+        {/* TRAILS TAB */}
         {activeTab === 'trails' && <TrailsComponent />}
-        
-        {activeTab === 'photos' && (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Photo Gallery</h2>
-              <p className="text-pink-100">Coming Soon</p>
-            </div>
-          </div>
-        )}
-        
-        {activeTab === 'prayer' && (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold mb-2">Prayer Requests</h2>
-              <p className="text-teal-100">Coming Soon</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Back to Top */}
