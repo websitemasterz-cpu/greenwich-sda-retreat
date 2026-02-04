@@ -179,14 +179,21 @@ const DIFFICULTY_MAP = {
 // LAZY LOADED COMPONENTS
 // ============================================================================
 
-const ScheduleTab = lazy(() => import('./components/ScheduleTab'));
-const LocationsTab = lazy(() => import('./components/LocationsTab'));
-const KitchenTab = lazy(() => import('./components/KitchenTab'));
-const DevotionalTab = lazy(() => import('./components/DevotionalTab'));
-const PhotosTab = lazy(() => import('./components/PhotosTab'));
-const PrayerTab = lazy(() => import('./components/PrayerTab'));
-const TestimonialsTab = lazy(() => import('./components/TestimonialsTab'));
-const TrailsTab = lazy(() => import('./components/TrailsTab'));
+// Direct imports from AllTabs.jsx
+import { 
+  KitchenTab,
+  DevotionalTab,
+  PhotosTab,
+  PrayerTab,
+  TestimonialsTab,
+  TrailsTab
+} from './components/AllTabs';
+
+// Import LocationsTab separately since it's default export in AllTabs.jsx
+import LocationsTab from './components/AllTabs';
+
+// For ScheduleTab - you need to check if it exists in AllTabs.jsx
+// If not, you may need to create it or import from another file
 
 // ============================================================================
 // UTILITY FUNCTIONS
