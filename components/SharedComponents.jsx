@@ -1,7 +1,22 @@
-// src/components/CheckInComponent.jsx
+// src/components/SharedComponents.jsx - CLEAN VERSION (NO DUPLICATES)
 import React from 'react';
-import { CheckSquare, CheckCircle } from 'lucide-react';
 
+// Import ALL icons at the top to avoid duplicates
+import { 
+  CheckSquare, 
+  CheckCircle,
+  AlertCircle, 
+  Phone, 
+  Shield,
+  TrendingUp as TrendingUpIcon, 
+  MapPin as TrailIcon, 
+  Target as TargetIcon,
+  Share, 
+  Download, 
+  Mountain 
+} from 'lucide-react';
+
+// CheckInComponent - Default export
 export default function CheckInComponent({ attractions, checkedInAttractions, checkIntoAttraction, progressMetrics }) {
   return (
     <div className="mt-6 bg-gradient-to-r from-amber-800/40 to-orange-800/40 rounded-2xl p-5 border border-amber-700/30">
@@ -52,9 +67,7 @@ export default function CheckInComponent({ attractions, checkedInAttractions, ch
   );
 }
 
-// src/components/EmergencyFeatures.jsx
-import { AlertCircle, Phone, Shield } from 'lucide-react';
-
+// EmergencyFeatures - Named export
 export function EmergencyFeatures() {
   const emergencyContactsData = [
     { id: 1, name: 'Retreat Leader', phone: '+44 7911 123456', role: 'Emergency Contact', icon: <Phone className="w-4 h-4" /> },
@@ -96,9 +109,7 @@ export function EmergencyFeatures() {
   );
 }
 
-// src/components/ProgressTracker.jsx
-import { TrendingUp as TrendingUpIcon, MapPin as TrailIcon, Target as TargetIcon } from 'lucide-react';
-
+// ProgressTracker - Named export
 export function ProgressTracker({ hikedTrails, progressMetrics, streakDays }) {
   return (
     <div className="mt-6 bg-gradient-to-r from-purple-800/40 to-indigo-800/40 rounded-2xl p-5 border border-purple-700/30">
@@ -177,9 +188,7 @@ export function ProgressTracker({ hikedTrails, progressMetrics, streakDays }) {
   );
 }
 
-// src/components/QuickActions.jsx
-import { Share, CheckCircle, Download, Mountain } from 'lucide-react';
-
+// QuickActions - Named export
 export function QuickActions({ addNotification, setStreakDays, currentUser, setCurrentUser }) {
   return (
     <div className="mt-6 grid grid-cols-4 gap-3">
@@ -244,5 +253,5 @@ export function QuickActions({ addNotification, setStreakDays, currentUser, setC
   );
 }
 
-export default CheckInComponent;
-export { EmergencyFeatures, ProgressTracker, QuickActions };
+// DO NOT ADD ANY EXPORT STATEMENTS BELOW THIS LINE
+// The components are already exported above where they are defined
